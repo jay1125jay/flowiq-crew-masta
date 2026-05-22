@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.3.0 FEE SYSTEM</title>
+<title>FlowIQ Crew MASTER v3.3.5 ACCOUNT CONTACT</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -28,7 +28,7 @@ body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSy
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.3.0 FEE SYSTEM</div>
+  <div class="sub">Internal Admin · v3.3.5 ACCOUNT CONTACT</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -64,6 +64,9 @@ function won(n){return Number(n||0).toLocaleString("ko-KR")+"원"}
 function feeAmount(base){return Math.round(Number(base||0)*0.05)}
 function totalPayment(base){return Number(base||0)+feeAmount(base)}
 function esc(v){return String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]))}
+function getManagerAccounts(){try{return JSON.parse(localStorage.getItem("crew_manager_accounts")||"[]")}catch(e){return []}}
+function getWorkerAccounts(){try{return JSON.parse(localStorage.getItem("crew_worker_accounts")||"[]")}catch(e){return []}}
+function normalizePhone(v){return String(v||"").replace(/[^0-9]/g,"")}
 function rawType(j){return String(j?.type||"공고").trim()}
 function parseType(j){
   const text=rawType(j);
@@ -191,8 +194,20 @@ function renderWorkerInfoRow(a,job){
     ${payButton}
   </div>`
 }
-function getBankInfo(a){const bank=a.bank_name||a.bank||a.account_bank||'';const number=a.account_number||a.account||a.bank_account||'';const holder=a.account_holder||a.holder||a.worker_name||'';if(!bank&&!number&&!holder)return '계좌정보 없음';return `${bank?esc(bank)+' ':''}${number?esc(number)+' ':''}${holder?'/ '+esc(holder):''}`}
-function getManagerContact(job){const contacts={demo_company:'미등록',alpha:'미등록',beta:'미등록'};return job?(job.manager_phone||job.manager_contact||job.contact_phone||job.phone||contacts[job.company_id]||'미등록'):'미등록'}
+function getBankInfo(a){
+  const saved=getWorkerAccounts().find(w=>normalizePhone(w.phone)===normalizePhone(a.phone));
+  const bank=a.bank_name||a.bank||a.account_bank||(saved&&saved.bank)||'';
+  const number=a.account_number||a.account||a.bank_account||(saved&&saved.account)||'';
+  const holder=a.account_holder||a.holder||(saved&&saved.holder)||a.worker_name||'';
+  if(!bank&&!number&&!holder)return '계좌정보 없음';
+  return `${bank?esc(bank)+' ':''}${number?esc(number)+' ':''}${holder?'/ '+esc(holder):''}`
+}
+function getManagerContact(job){
+  if(!job)return '미등록';
+  const account=getManagerAccounts().find(a=>String(a.company_id||'')===String(job.company_id||''));
+  const contacts={demo_company:'미등록',alpha:'미등록',beta:'미등록'};
+  return job.manager_phone||job.manager_contact||job.contact_phone||job.phone||(account&&account.phone)||contacts[job.company_id]||'미등록'
+}
 function getAttendanceStatus(a){const found=attendance.find(t=>String(t.phone||'')===String(a.phone||'')&&String(t.job_id||'')===String(a.job_id||''));return found?'출근기록 있음':'출근기록 없음'}
 async function setJobStatus(id,status){
   const job=jobs.find(j=>Number(j.id)===Number(id));
