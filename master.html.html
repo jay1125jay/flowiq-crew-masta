@@ -3,18 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.1.8.9 HOTFIX</title>
+<title>FlowIQ Crew MASTER v3.1.9 FILTER</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;display:flex;justify-content:center}
 .app{width:100%;max-width:460px;min-height:100vh;padding:24px 18px 90px}.brand{font-size:28px;font-weight:950;background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sub{color:#94a3b8;font-size:14px;line-height:1.45}.title{font-size:21px;font-weight:900;margin-bottom:6px}.section{font-size:21px;font-weight:950;margin:24px 0 12px}.card{background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(17,24,39,.98));border:1px solid rgba(148,163,184,.12);border-radius:26px;padding:18px;margin-bottom:14px;box-shadow:0 12px 34px rgba(0,0,0,.28)}.notice{border-color:rgba(96,165,250,.22);background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(59,130,246,.08))}input{width:100%;min-height:54px;border:1px solid rgba(255,255,255,.08);background:#0f172a;color:white;border-radius:18px;padding:0 14px;font-size:15px;margin:10px 0}button{border:0;border-radius:18px;min-height:50px;padding:0 14px;color:#fff;font-weight:850;background:#334155;cursor:pointer}.blue{background:#2563eb}.green{background:#059669}.red{background:#dc2626}.gray{background:#334155}.yellow{background:#d97706}.full{width:100%;margin-top:8px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hidden{display:none!important}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;background:rgba(59,130,246,.16);color:#bfdbfe;margin-top:6px}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.meta{font-size:13px;color:#cbd5e1;line-height:1.5;margin-top:8px}.danger{background:rgba(239,68,68,.12);border:1px solid rgba(248,113,113,.22);color:#fecaca;border-radius:18px;padding:12px;font-size:13px}.status{display:inline-flex;padding:7px 12px;border-radius:999px;color:white;font-size:12px;font-weight:950;margin-top:8px}.wait{background:#d97706}.paid{background:#2563eb}.live{background:#059669}.closed{background:#dc2626}button:disabled{opacity:.45;cursor:not-allowed}.mini{font-size:12px;color:#94a3b8;margin-top:6px}.paydone{background:#16a34a}.paywait{background:#2563eb}.worker-card-title{font-size:18px;font-weight:950;margin-bottom:6px}
+.filter-row{display:flex;gap:8px;overflow:auto;margin:10px 0 14px;padding-bottom:4px}.filter-row button{min-width:max-content;min-height:42px;border-radius:999px;font-size:12px;background:#1e293b}.filter-row button.active{background:#2563eb;box-shadow:0 8px 22px rgba(37,99,235,.35)}
 </style>
 </head>
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.1.8.6 HOTFIX</div>
+  <div class="sub">Internal Admin · v3.1.9 FILTER</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -31,6 +32,7 @@ body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSy
     </div>
 
     <div class="section">공고 운영 관리</div>
+    <div id="jobFilterBox" class="filter-row"></div>
     <div id="jobsBox"></div>
   </section>
 </main>
@@ -44,7 +46,7 @@ const REAL_SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const db=supabase.createClient(SUPABASE_URL,REAL_SUPABASE_KEY);
 const MASTER_PASSWORD="1234";
 const COMPANY_NAMES={demo_company:"FlowIQ Demo",alpha:"Alpha Logistics",beta:"Beta Factory"};
-let jobs=[];let applications=[];let attendance=[];
+let jobs=[];let applications=[];let attendance=[];let jobFilter="전체";
 function won(n){return Number(n||0).toLocaleString("ko-KR")+"원"}
 function esc(v){return String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]))}
 function rawType(j){return String(j?.type||"공고").trim()}
@@ -73,7 +75,7 @@ function isJobFull(j){const needed=Number(j&&j.needed||0);const applied=Number(j
 function visibleStatus(j){return isJobFull(j)?'공고마감':jobStatus(j)}
 async function loginMaster(){const pw=document.getElementById('masterPassword').value;if(pw!==MASTER_PASSWORD){alert('비밀번호가 틀렸습니다.');return}document.getElementById('loginBox').classList.add('hidden');document.getElementById('masterApp').classList.remove('hidden');await loadMasterData()}
 async function loadMasterData(){const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});const tr=await db.from('attendance').select('*').order('created_at',{ascending:false});if(jr.error)alert('jobs 오류: '+jr.error.message);if(ar.error)alert('applications 오류: '+ar.error.message);if(tr.error)alert('attendance 오류: '+tr.error.message);jobs=jr.data||[];applications=ar.data||[];attendance=tr.data||[];renderAll()}
-function renderAll(){renderJobs()}
+function renderAll(){renderJobFilters();renderJobs()}
 async function refreshMaster(){
   const box=document.getElementById('jobsBox');
   if(box)box.innerHTML='<div class="card"><div class="sub">새로고침 중...</div></div>';
@@ -92,9 +94,21 @@ async function reopenJob(id){
   alert('마감해제 완료: 입금전');
 }
 
+function filterKey(j){return statusText(visibleStatus(j))}
+function filterLabel(key){return key==='입금확인'?'입금완료':key}
+function renderJobFilters(){
+  const box=document.getElementById('jobFilterBox');
+  if(!box)return;
+  const keys=['전체','입금전','입금완료','게시중','공고마감'];
+  const counts={전체:jobs.length,입금전:0,입금완료:0,게시중:0,공고마감:0};
+  jobs.forEach(j=>{const k=filterKey(j);if(counts[k]!==undefined)counts[k]++;});
+  box.innerHTML=keys.map(k=>`<button class="${jobFilter===k?'active':''}" onclick="setJobFilter('${k}')">${k}(${counts[k]||0})</button>`).join('');
+}
+function setJobFilter(key){jobFilter=key;renderJobFilters();renderJobs()}
 function renderJobs(){
   const box=document.getElementById('jobsBox');
-  box.innerHTML=jobs.length?jobs.map(j=>{
+  const filteredJobs=jobFilter==='전체'?jobs:jobs.filter(j=>filterKey(j)===jobFilter);
+  box.innerHTML=filteredJobs.length?filteredJobs.map(j=>{
     const current=jobStatus(j);
     const st=visibleStatus(j);
     const full=isJobFull(j);
@@ -131,7 +145,7 @@ function renderJobs(){
       <button class="full blue" onclick="toggleWorkerInfo(${j.id})">근로자 정보 보기</button>
       <div id="workerInfo_${j.id}" class="hidden" style="margin-top:12px">${workerRows}</div>
     </div>`
-  }).join(''):`<div class="card"><div class="sub">등록된 공고가 없습니다.</div></div>`
+  }).join(''):`<div class="card"><div class="sub">${jobFilter} 공고가 없습니다.</div></div>`
 }
 function guardPost(currentText){
   if(currentText==='공고마감')return alert('공고마감 상태입니다. 먼저 마감해제를 눌러주세요.');
