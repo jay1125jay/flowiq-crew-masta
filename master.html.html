@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.1.8.6 HOTFIX</title>
+<title>FlowIQ Crew MASTER v3.1.8.7 HOTFIX</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -50,18 +50,25 @@ function esc(v){return String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt
 function rawType(j){return String(j?.type||"공고").trim()}
 function parseType(j){
   const text=rawType(j);
-  const m=text.match(/^\[(입금대기|입금확인|게시중|공고마감)(?::(입금대기|입금확인|게시중))?\]\s*/);
-  return {status:m?m[1]:"입금대기",prev:m&&m[2]?m[2]:"",type:text.replace(/^\[(입금대기|입금확인|게시중|공고마감)(?::(입금대기|입금확인|게시중))?\]\s*/,"").trim()||"공고"};
+  const re=/^\[(입금대기|입금전|입금확인|입금완료|게시중|공고마감)(?::(입금대기|입금전|입금확인|입금완료|게시중))?\]\s*/;
+  const m=text.match(re);
+  let status=m?m[1]:"입금대기";
+  let prev=m&&m[2]?m[2]:"";
+  if(status==="입금전")status="입금대기";
+  if(status==="입금완료")status="입금확인";
+  if(prev==="입금전")prev="입금대기";
+  if(prev==="입금완료")prev="입금확인";
+  return {status,prev,type:text.replace(re,"").trim()||"공고"};
 }
 function jobStatus(j){return parseType(j).status}
 function previousStatus(j){return parseType(j).prev||"입금대기"}
 function jobType(j){return parseType(j).type}
 function statusClass(st){return st==="공고마감"?"closed":(st==="게시중"?"live":(st==="입금확인"?"paid":"wait"))}
-function statusText(st){return st==="입금대기"?"입금전":st}
+function statusText(st){return st==="입금대기"?"입금전":(st==="입금확인"?"입금완료":st)}
 function statusLabel(j){const st=jobStatus(j);return `<span class="status ${statusClass(st)}">${statusText(st)}</span>`}
-function cleanType(type){return String(type||"공고").replace(/^\[(입금대기|입금확인|게시중|공고마감)(?::(입금대기|입금확인|게시중))?\]\s*/,"").trim()||"공고"}
+function cleanType(type){return String(type||"공고").replace(/^\[(입금대기|입금전|입금확인|입금완료|게시중|공고마감)(?::(입금대기|입금전|입금확인|입금완료|게시중))?\]\s*/,"").trim()||"공고"}
 function makeType(status,type){return `[${status}] `+cleanType(type)}
-function makeClosedType(prev,type){return `[공고마감:${prev||"게시중"}] `+cleanType(type)}
+function makeClosedType(prev,type){return `[공고마감:${prev||"입금대기"}] `+cleanType(type)}
 function isJobFull(j){const needed=Number(j&&j.needed||0);const applied=Number(j&&j.applied||0);return needed>0&&applied>=needed}
 function visibleStatus(j){return isJobFull(j)?'공고마감':jobStatus(j)}
 async function loginMaster(){const pw=document.getElementById('masterPassword').value;if(pw!==MASTER_PASSWORD){alert('비밀번호가 틀렸습니다.');return}document.getElementById('loginBox').classList.add('hidden');document.getElementById('masterApp').classList.remove('hidden');await loadMasterData()}
@@ -77,24 +84,33 @@ async function reopenJob(id){
   if(!job)return alert('공고를 찾을 수 없습니다.');
   if(jobStatus(job)!=='공고마감')return alert('마감 상태가 아닙니다.');
   if(isJobFull(job))return alert('필요 인원이 꽉 차서 마감해제할 수 없습니다.');
-  const restore=previousStatus(job);
-  if(!confirm('공고마감을 해제하고 '+statusText(restore)+' 상태로 되돌릴까요?'))return;
+  const restore='입금대기';
+  if(!confirm('공고마감을 해제하고 입금전 상태로 되돌릴까요?'))return;
   const {error}=await db.from('jobs').update({type:makeType(restore,jobType(job))}).eq('id',id);
   if(error){alert('마감해제 오류: '+error.message);return}
   await loadMasterData();
-  alert('마감해제 완료: '+statusText(restore));
+  alert('마감해제 완료: 입금전');
 }
 
 function renderJobs(){
   const box=document.getElementById('jobsBox');
   box.innerHTML=jobs.length?jobs.map(j=>{
+    const current=jobStatus(j);
     const st=visibleStatus(j);
-    const canPay=jobStatus(j)!=='공고마감'&&!isJobFull(j);
-    const canPost=jobStatus(j)!=='공고마감'&&!isJobFull(j);
+    const full=isJobFull(j);
+    const closed=current==='공고마감'||full;
+    const canDeposit=current==='입금대기'&&!full;
+    const canPost=current==='입금확인'&&!full;
     const jobApps=applications.filter(a=>Number(a.job_id)===Number(j.id));
     const approved=jobApps.filter(a=>['승인','출근완료','입금완료'].includes(a.status||'지원')).length;
     const checked=jobApps.filter(a=>attendance.some(t=>String(t.phone||'')===String(a.phone||'')&&String(t.job_id||'')===String(j.id))).length;
     const workerRows=jobApps.length?jobApps.map(a=>renderWorkerInfoRow(a,j)).join(''):`<div class="danger">이 공고에 연결된 근로자가 없습니다.</div>`;
+    const depositBtn=canDeposit
+      ? `<button class="yellow" onclick="setJobStatus(${j.id},'입금확인')">입금완료</button>`
+      : `<button class="yellow" disabled>${current==='입금확인'||current==='게시중'?'입금완료':'입금완료'}</button>`;
+    const postBtn=canPost
+      ? `<button class="green" onclick="setJobStatus(${j.id},'게시중')">게시승인</button>`
+      : `<button class="green" onclick="guardPost('${statusText(current)}')">게시승인</button>`;
     return `<div class="card">
       <div class="row">
         <div>
@@ -104,12 +120,12 @@ function renderJobs(){
         </div>
         <button class="red" onclick="deleteJob(${j.id})">삭제</button>
       </div>
-      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 ${won(j.salary)} · 👥 ${j.applied||0}/${j.needed||0}${isJobFull(j)?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}<br>지원 ${jobApps.length}명 · 승인 ${approved}명 · 출근 ${checked}명</div>
+      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 ${won(j.salary)} · 👥 ${j.applied||0}/${j.needed||0}${full?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}<br>지원 ${jobApps.length}명 · 승인 ${approved}명 · 출근 ${checked}명</div>
       <div class="grid2" style="margin-top:12px">
-        <button class="yellow" onclick="setJobStatus(${j.id},'입금확인')">입금확인</button>
-        <button class="green" onclick="setJobStatus(${j.id},'게시중')">게시승인</button>
+        ${depositBtn}
+        ${postBtn}
       </div>
-      ${jobStatus(j)==='공고마감'
+      ${current==='공고마감'
         ? `<button class="full green" onclick="reopenJob(${j.id})">마감해제</button>`
         : `<button class="full gray" onclick="setJobStatus(${j.id},'공고마감')">공고마감</button>`}
       <button class="full blue" onclick="toggleWorkerInfo(${j.id})">근로자 정보 보기</button>
@@ -117,6 +133,12 @@ function renderJobs(){
     </div>`
   }).join(''):`<div class="card"><div class="sub">등록된 공고가 없습니다.</div></div>`
 }
+function guardPost(currentText){
+  if(currentText==='공고마감')return alert('공고마감 상태입니다. 먼저 마감해제를 눌러주세요.');
+  if(currentText==='입금전')return alert('입금완료 후 게시승인할 수 있습니다.');
+  return alert('현재 상태에서는 게시승인을 할 수 없습니다.');
+}
+
 function toggleWorkerInfo(jobId){
   const el=document.getElementById('workerInfo_'+jobId);
   if(el)el.classList.toggle('hidden');
@@ -138,15 +160,24 @@ async function setJobStatus(id,status){
   const current=jobStatus(job);
   if(current==='공고마감')return alert('공고마감 상태입니다. 먼저 마감해제를 눌러주세요.');
   if(isJobFull(job))return alert('필요 인원이 꽉 차서 상태를 변경할 수 없습니다.');
-  if(status==='입금확인'&&current==='입금확인')return alert('이미 입금확인 상태입니다.');
-  if(status==='입금확인'&&current==='게시중')return alert('이미 게시승인된 공고입니다.');
-  if(status==='게시중'&&current!=='입금확인')return alert('입금확인 후 게시승인할 수 있습니다.');
+
+  if(status==='입금확인'){
+    if(current!=='입금대기')return alert('입금전 상태에서만 입금완료 처리할 수 있습니다.');
+  }
+  if(status==='게시중'){
+    if(current!=='입금확인')return alert('입금완료 후 게시승인할 수 있습니다.');
+  }
+  if(status==='공고마감'){
+    if(!confirm('이 공고를 마감할까요?'))return;
+  }
+
   const nextType=status==='공고마감'?makeClosedType(current,jobType(job)):makeType(status,jobType(job));
   const {error}=await db.from('jobs').update({type:nextType}).eq('id',id);
   if(error){alert('공고 상태 변경 오류: '+error.message);return}
   await loadMasterData();
   alert(statusText(status)+' 처리 완료');
 }
+
 async function markWorkerPaid(id){if(!confirm('이 근로자를 입금 완료 처리할까요?'))return;const {error}=await db.from('applications').update({status:'입금완료'}).eq('id',id);if(error){alert('입금 완료 처리 오류: '+error.message);return}await loadMasterData();alert('입금 완료 처리됨')}
 async function deleteJob(id){if(!confirm('이 공고를 삭제할까요?'))return;const {error}=await db.from('jobs').delete().eq('id',id);if(error){alert('삭제 오류: '+error.message);return}await loadMasterData()}
 </script>
