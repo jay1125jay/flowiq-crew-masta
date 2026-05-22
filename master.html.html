@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.2.1 CLEAN PAYMENT</title>
+<title>FlowIQ Crew MASTER v3.3.0 FEE SYSTEM</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -28,7 +28,7 @@ body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSy
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.2.1 CLEAN PAYMENT</div>
+  <div class="sub">Internal Admin · v3.3.0 FEE SYSTEM</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -61,6 +61,8 @@ const MASTER_PASSWORD="1234";
 const COMPANY_NAMES={demo_company:"FlowIQ Demo",alpha:"Alpha Logistics",beta:"Beta Factory"};
 let jobs=[];let applications=[];let attendance=[];let jobFilter="전체";
 function won(n){return Number(n||0).toLocaleString("ko-KR")+"원"}
+function feeAmount(base){return Math.round(Number(base||0)*0.05)}
+function totalPayment(base){return Number(base||0)+feeAmount(base)}
 function esc(v){return String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]))}
 function rawType(j){return String(j?.type||"공고").trim()}
 function parseType(j){
@@ -147,7 +149,7 @@ function renderJobs(){
         </div>
         <button class="red" onclick="deleteJob(${j.id})">삭제</button>
       </div>
-      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 ${won(j.salary)} · 👥 ${j.applied||0}/${j.needed||0}${full?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}<br>지원 ${jobApps.length}명 · 승인 ${approved}명 · 출근 ${checked}명</div>
+      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 업체 일당: ${won(j.salary)}<br>💸 Crew 수수료(5%): ${won(feeAmount(j.salary))}<br>🧾 총 결제금액: ${won(totalPayment(j.salary))}<br>👥 ${j.applied||0}/${j.needed||0}${full?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}<br>지원 ${jobApps.length}명 · 승인 ${approved}명 · 출근 ${checked}명</div>
       <div class="grid2" style="margin-top:12px">
         ${depositBtn}
         ${postBtn}
@@ -185,7 +187,7 @@ function renderWorkerInfoRow(a,job){
   return `<div class="card" style="margin:10px 0;background:rgba(15,23,42,.72)">
     <span class="status ${paymentClass}">${paymentText}</span>
     <div class="worker-card-title" style="margin-top:10px">${esc(a.worker_name||'이름없음')}</div>
-    <div class="meta">연락처: ${esc(a.phone||'번호없음')}<br>근무상태: ${esc(status)}<br><br><b>현장 정보</b><br>업체명: ${esc(job?job.title:'삭제된 공고')} · 관리자 연락처: ${esc(getManagerContact(job))}<br>현장 위치: ${esc(job?job.location:'-')}<br>근무시간: ${esc(job?job.work_time:'-')}<br>일급: ${job?won(job.salary):'-'}<br>작업: ${esc(job?jobType(job):'-')}<br>출근: ${getAttendanceStatus(a)}<br><br><b>계좌 정보</b><br>${getBankInfo(a)}</div>
+    <div class="meta">연락처: ${esc(a.phone||'번호없음')}<br>근무상태: ${esc(status)}<br><br><b>현장 정보</b><br>업체명: ${esc(job?job.title:'삭제된 공고')} · 관리자 연락처: ${esc(getManagerContact(job))}<br>현장 위치: ${esc(job?job.location:'-')}<br>근무시간: ${esc(job?job.work_time:'-')}<br>업체 일당: ${job?won(job.salary):'-'}<br>Crew 수수료(5%): ${job?won(feeAmount(job.salary)):'-'}<br>총 결제금액: ${job?won(totalPayment(job.salary)):'-'}<br>작업: ${esc(job?jobType(job):'-')}<br>출근: ${getAttendanceStatus(a)}<br><br><b>계좌 정보</b><br>${getBankInfo(a)}</div>
     ${payButton}
   </div>`
 }
