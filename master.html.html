@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.2.0 PAYMENT FLOW</title>
+<title>FlowIQ Crew MASTER v3.2.1 CLEAN PAYMENT</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -28,7 +28,7 @@ body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSy
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.2.0 PAYMENT FLOW</div>
+  <div class="sub">Internal Admin · v3.2.1 CLEAN PAYMENT</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -180,7 +180,7 @@ function renderWorkerInfoRow(a,job){
     ? `<button class="full green" disabled>입금 완료</button>`
     : (workReady
       ? `<button class="full green" onclick="markWorkerPaid(${a.id})">입금 완료</button>`
-      : `<button class="full gray" onclick="alert('현장관리자가 근무완료 체크를 해야 입금완료 처리할 수 있습니다.')">근무완료 대기</button>`);
+      : `<div class="mini">현장관리자 근무완료 체크 후 입금완료 버튼이 표시됩니다.</div>`);
 
   return `<div class="card" style="margin:10px 0;background:rgba(15,23,42,.72)">
     <span class="status ${paymentClass}">${paymentText}</span>
