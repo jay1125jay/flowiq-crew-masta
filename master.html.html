@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.1.5.1</title>
+<title>FlowIQ Crew MASTER v3.1.6</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;display:flex;justify-content:center}
-.app{width:100%;max-width:460px;min-height:100vh;padding:24px 18px 90px}.brand{font-size:28px;font-weight:950;background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sub{color:#94a3b8;font-size:14px;line-height:1.45}.title{font-size:21px;font-weight:900;margin-bottom:6px}.section{font-size:21px;font-weight:950;margin:24px 0 12px}.card{background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(17,24,39,.98));border:1px solid rgba(148,163,184,.12);border-radius:26px;padding:18px;margin-bottom:14px;box-shadow:0 12px 34px rgba(0,0,0,.28)}.notice{border-color:rgba(96,165,250,.22);background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(59,130,246,.08))}input{width:100%;min-height:54px;border:1px solid rgba(255,255,255,.08);background:#0f172a;color:white;border-radius:18px;padding:0 14px;font-size:15px;margin:10px 0}button{border:0;border-radius:18px;min-height:50px;padding:0 14px;color:#fff;font-weight:850;background:#334155;cursor:pointer}.blue{background:#2563eb}.green{background:#059669}.red{background:#dc2626}.gray{background:#334155}.yellow{background:#d97706}.full{width:100%;margin-top:8px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hidden{display:none!important}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;background:rgba(59,130,246,.16);color:#bfdbfe;margin-top:6px}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.meta{font-size:13px;color:#cbd5e1;line-height:1.5;margin-top:8px}.danger{background:rgba(239,68,68,.12);border:1px solid rgba(248,113,113,.22);color:#fecaca;border-radius:18px;padding:12px;font-size:13px}.status{display:inline-flex;padding:7px 12px;border-radius:999px;color:white;font-size:12px;font-weight:950;margin-top:8px}.wait{background:#d97706}.paid{background:#2563eb}.live{background:#059669}
+.app{width:100%;max-width:460px;min-height:100vh;padding:24px 18px 90px}.brand{font-size:28px;font-weight:950;background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sub{color:#94a3b8;font-size:14px;line-height:1.45}.title{font-size:21px;font-weight:900;margin-bottom:6px}.section{font-size:21px;font-weight:950;margin:24px 0 12px}.card{background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(17,24,39,.98));border:1px solid rgba(148,163,184,.12);border-radius:26px;padding:18px;margin-bottom:14px;box-shadow:0 12px 34px rgba(0,0,0,.28)}.notice{border-color:rgba(96,165,250,.22);background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(59,130,246,.08))}input{width:100%;min-height:54px;border:1px solid rgba(255,255,255,.08);background:#0f172a;color:white;border-radius:18px;padding:0 14px;font-size:15px;margin:10px 0}button{border:0;border-radius:18px;min-height:50px;padding:0 14px;color:#fff;font-weight:850;background:#334155;cursor:pointer}.blue{background:#2563eb}.green{background:#059669}.red{background:#dc2626}.gray{background:#334155}.yellow{background:#d97706}.full{width:100%;margin-top:8px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hidden{display:none!important}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;background:rgba(59,130,246,.16);color:#bfdbfe;margin-top:6px}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.meta{font-size:13px;color:#cbd5e1;line-height:1.5;margin-top:8px}.danger{background:rgba(239,68,68,.12);border:1px solid rgba(248,113,113,.22);color:#fecaca;border-radius:18px;padding:12px;font-size:13px}.status{display:inline-flex;padding:7px 12px;border-radius:999px;color:white;font-size:12px;font-weight:950;margin-top:8px}.wait{background:#d97706}.paid{background:#2563eb}.live{background:#059669}.closed{background:#475569}button:disabled{opacity:.45;cursor:not-allowed}.mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.mini{background:#0f172a;border:1px solid rgba(148,163,184,.12);border-radius:16px;padding:12px;text-align:center}.mini b{display:block;font-size:18px}.mini span{font-size:11px;color:#94a3b8}.person{background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.10);border-radius:18px;padding:12px;margin-top:10px}.person-title{font-weight:900}.person-state{font-size:12px;color:#cbd5e1;margin-top:4px}.pay-ok{color:#86efac;font-weight:900}.pay-wait{color:#fbbf24;font-weight:900}
 </style>
 </head>
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.1.1</div>
+  <div class="sub">Internal Admin · v3.1.6</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -26,18 +26,15 @@ body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSy
   <section id="masterApp" class="hidden">
     <div class="card notice">
       <div class="title">MASTER 운영센터</div>
-      <div class="sub">입금확인 → 게시승인 → 공고 노출을 관리합니다.</div>
+      <div class="sub">입금완료 · 지원자 · 출근 상태를 한 화면에서 관리합니다.</div>
       <button class="full green" onclick="loadMasterData()">새로고침</button>
     </div>
 
-    <div class="section">공고 승인 관리</div>
+    <div class="section">공고 운영 관리</div>
     <div id="jobsBox"></div>
 
-    <div class="section">지원자 관리</div>
-    <div id="applicationsBox"></div>
-
-    <div class="section">출근 기록</div>
-    <div id="attendanceBox"></div>
+    <div class="section">현장 운영</div>
+    <div id="fieldOpsBox"></div>
   </section>
 </main>
 <script>
@@ -63,10 +60,60 @@ function isJobFull(j){const needed=Number(j&&j.needed||0);const applied=Number(j
 function visibleStatus(j){return isJobFull(j)?'공고마감':jobStatus(j)}
 async function loginMaster(){const pw=document.getElementById('masterPassword').value;if(pw!==MASTER_PASSWORD){alert('비밀번호가 틀렸습니다.');return}document.getElementById('loginBox').classList.add('hidden');document.getElementById('masterApp').classList.remove('hidden');await loadMasterData()}
 async function loadMasterData(){const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});const tr=await db.from('attendance').select('*').order('created_at',{ascending:false});if(jr.error)alert('jobs 오류: '+jr.error.message);if(ar.error)alert('applications 오류: '+ar.error.message);if(tr.error)alert('attendance 오류: '+tr.error.message);jobs=jr.data||[];applications=ar.data||[];attendance=tr.data||[];renderAll()}
-function renderAll(){renderJobs();renderApplications();renderAttendance()}
+function renderAll(){renderJobs();renderFieldOps()}
 function renderJobs(){const box=document.getElementById('jobsBox');box.innerHTML=jobs.length?jobs.map(j=>{const st=visibleStatus(j);const canPay=jobStatus(j)==='입금대기'&&!isJobFull(j);const canPost=jobStatus(j)==='입금확인'&&!isJobFull(j);return `<div class="card"><div class="row"><div><div class="title">${esc(j.title)}</div><div class="badge">${esc(COMPANY_NAMES[j.company_id]||j.company_id||'업체없음')}</div><br><span class="status ${statusClass(st)}">${st}</span></div><button class="red" onclick="deleteJob(${j.id})">삭제</button></div><div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 ${won(j.salary)} · 👥 ${j.applied||0}/${j.needed||0}${isJobFull(j)?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}</div><div class="grid2" style="margin-top:12px"><button class="yellow" ${canPay?'': 'disabled'} onclick="setJobStatus(${j.id},'입금확인')">입금확인</button><button class="green" ${canPost?'': 'disabled'} onclick="setJobStatus(${j.id},'게시중')">게시승인</button></div><button class="full gray" onclick="setJobStatus(${j.id},'입금대기')">입금대기로 되돌리기</button></div>`}).join(''):`<div class="card"><div class="sub">등록된 공고가 없습니다.</div></div>`}
-function renderApplications(){const box=document.getElementById('applicationsBox');box.innerHTML=applications.length?applications.map(a=>{const job=jobs.find(j=>Number(j.id)===Number(a.job_id));const status=a.status||'지원';return `<div class="card"><div class="title">${esc(a.worker_name||'이름없음')}</div><div class="meta">연락처: ${esc(a.phone||'번호없음')}<br>공고: ${esc(job?job.title:'삭제된 공고')}<br>업체: ${esc(a.company_id||'업체없음')}<br>상태: ${esc(status)}</div><div class="grid2"><button class="green" onclick="updateApplication(${a.id},'승인')">승인</button><button class="red" onclick="updateApplication(${a.id},'거절')">거절</button></div></div>`}).join(''):`<div class="card"><div class="sub">지원자가 없습니다.</div></div>`}
-function renderAttendance(){const box=document.getElementById('attendanceBox');box.innerHTML=attendance.length?attendance.map(a=>`<div class="card"><div class="title">${esc(a.worker_name||'이름없음')}</div><div class="meta">${esc(a.phone||'번호없음')}<br>${esc(a.job_title||'')}<br>${a.created_at?new Date(a.created_at).toLocaleString():''}</div></div>`).join(''):`<div class="card"><div class="sub">출근 기록이 없습니다.</div></div>`}
+function renderFieldOps(){
+  const box=document.getElementById('fieldOpsBox');
+  if(!box)return;
+
+  if(!jobs.length){
+    box.innerHTML=`<div class="card"><div class="sub">운영 중인 현장이 없습니다.</div></div>`;
+    return;
+  }
+
+  box.innerHTML=jobs.map(j=>{
+    const st=visibleStatus(j);
+    const payDone=jobStatus(j)!=='입금대기';
+    const jobApps=applications.filter(a=>Number(a.job_id)===Number(j.id));
+    const approved=jobApps.filter(a=>['승인','출근완료'].includes(a.status||'지원')).length;
+    const checked=attendance.filter(a=>Number(a.job_id)===Number(j.id)).length;
+    const pending=jobApps.filter(a=>(a.status||'지원')==='지원').length;
+
+    const people=jobApps.length?jobApps.map(a=>{
+      const checkedIn=attendance.some(t=>Number(t.job_id)===Number(j.id)&&String(t.phone||'')===String(a.phone||''));
+      const appStatus=a.status||'지원';
+      const state=checkedIn?'출근완료':appStatus;
+      return `<div class="person">
+        <div class="person-title">👷 ${esc(a.worker_name||'이름없음')}</div>
+        <div class="person-state">📞 ${esc(a.phone||'번호없음')} · 상태: ${esc(state)}</div>
+        <div class="grid2" style="margin-top:10px">
+          <button class="green" onclick="updateApplication(${a.id},'승인')">승인</button>
+          <button class="red" onclick="updateApplication(${a.id},'거절')">거절</button>
+        </div>
+      </div>`;
+    }).join(''):`<div class="person"><div class="sub">아직 지원자가 없습니다.</div></div>`;
+
+    return `<div class="card">
+      <div class="row">
+        <div>
+          <div class="title">${esc(j.title)}</div>
+          <div class="badge">${esc(COMPANY_NAMES[j.company_id]||j.company_id||'업체없음')}</div><br>
+          <span class="status ${statusClass(st)}">${st}</span>
+        </div>
+        <div class="sub ${payDone?'pay-ok':'pay-wait'}">${payDone?'💰 입금완료':'💰 입금대기'}</div>
+      </div>
+      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 ${won(j.salary)} · 👥 ${j.applied||0}/${j.needed||0}<br>작업: ${esc(jobType(j))}</div>
+      <div class="mini-grid">
+        <div class="mini"><b>${payDone?'완료':'대기'}</b><span>입금</span></div>
+        <div class="mini"><b>${jobApps.length}</b><span>지원</span></div>
+        <div class="mini"><b>${approved}</b><span>승인</span></div>
+        <div class="mini"><b>${checked}</b><span>출근</span></div>
+      </div>
+      ${pending?`<div class="danger">승인 대기 ${pending}명</div>`:''}
+      ${people}
+    </div>`;
+  }).join('');
+}
 async function setJobStatus(id,status){const job=jobs.find(j=>Number(j.id)===Number(id));if(!job)return alert('공고를 찾을 수 없습니다.');const current=jobStatus(job);if(status==='게시중'&&current!=='입금확인')return alert('입금확인 후 게시승인할 수 있습니다.');if(status==='게시중'&&isJobFull(job))return alert('필요 인원이 마감되어 게시승인할 수 없습니다.');const {error}=await db.from('jobs').update({type:makeType(status,jobType(job))}).eq('id',id);if(error){alert('공고 상태 변경 오류: '+error.message);return}await loadMasterData();alert(status+' 처리 완료')}
 async function updateApplication(id,status){const {error}=await db.from('applications').update({status}).eq('id',id);if(error){alert('처리 오류: '+error.message);return}await loadMasterData();alert(status+' 처리 완료')}
 async function deleteJob(id){if(!confirm('이 공고를 삭제할까요?'))return;const {error}=await db.from('jobs').delete().eq('id',id);if(error){alert('삭제 오류: '+error.message);return}await loadMasterData()}
