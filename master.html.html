@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.1.8.8 HOTFIX</title>
+<title>FlowIQ Crew MASTER v3.1.8.9 HOTFIX</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -148,7 +148,7 @@ function renderWorkerInfoRow(a,job){
   const paid=status==='입금완료';
   return `<div class="card" style="margin:10px 0;background:rgba(15,23,42,.72)">
     <div class="row"><div><div class="worker-card-title">${esc(a.worker_name||'이름없음')}</div><span class="status ${paid?'paydone':'paywait'}">${paid?'입금완료':'입금전'}</span></div></div>
-    <div class="meta"><b>근로자 정보</b><br>연락처: ${esc(a.phone||'번호없음')}<br><br><b>현장 정보</b><br>업체명: ${esc(job?job.title:'삭제된 공고')}<br>현장 위치: ${esc(job?job.location:'-')}<br>관리자 연락처: ${esc(getManagerContact(job))}<br>근무시간: ${esc(job?job.work_time:'-')}<br>일급: ${job?won(job.salary):'-'}<br>작업: ${esc(job?jobType(job):'-')}<br>출근: ${getAttendanceStatus(a)}<br><br><b>계좌 정보</b><br>${getBankInfo(a)}</div>
+    <div class="meta">연락처: ${esc(a.phone||'번호없음')}<br><br><b>현장 정보</b><br>업체명: ${esc(job?job.title:'삭제된 공고')} · 관리자 연락처: ${esc(getManagerContact(job))}<br>현장 위치: ${esc(job?job.location:'-')}<br>근무시간: ${esc(job?job.work_time:'-')}<br>일급: ${job?won(job.salary):'-'}<br>작업: ${esc(job?jobType(job):'-')}<br>출근: ${getAttendanceStatus(a)}<br><br><b>계좌 정보</b><br>${getBankInfo(a)}</div>
     <button class="full green" ${paid?'disabled':''} onclick="markWorkerPaid(${a.id})">입금 완료</button>
   </div>`
 }
