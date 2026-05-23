@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.3.5 ACCOUNT CONTACT</title>
+<title>FlowIQ Crew MASTER v3.4.0 SETTLEMENT</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -23,12 +23,17 @@ body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSy
 .grid2{grid-template-columns:1fr 1fr}
 @media(max-width:380px){.app{padding:20px 14px 80px}.grid2{grid-template-columns:1fr}.filter-row{grid-template-columns:1fr}button{font-size:13px;padding:0 10px}}
 
+.settle-note{background:rgba(245,158,11,.12);border:1px solid rgba(251,191,36,.20);color:#fde68a;border-radius:16px;padding:12px;font-size:12px;line-height:1.45;margin-top:10px}
+.settle-state{display:inline-flex;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:950;margin-top:8px}
+.settle-wait{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff}
+.settle-checking{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff}
+.settle-done{background:linear-gradient(135deg,#059669,#22c55e);color:#fff}
 </style>
 </head>
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.3.5 ACCOUNT CONTACT</div>
+  <div class="sub">Internal Admin · v3.4.0 SETTLEMENT</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -175,20 +180,43 @@ function toggleWorkerInfo(jobId){
   const el=document.getElementById('workerInfo_'+jobId);
   if(el)el.classList.toggle('hidden');
 }
+function hasAccountData(a){
+  const saved=getWorkerAccounts().find(w=>normalizePhone(w.phone)===normalizePhone(a&&a.phone));
+  const bank=a.bank_name||a.bank||a.account_bank||(saved&&saved.bank)||'';
+  const number=a.account_number||a.account||a.bank_account||(saved&&saved.account)||'';
+  return !!(String(bank).trim()&&String(number).trim());
+}
+function settlementBadge(status){
+  const s=String(status||'').trim();
+  if(s==='입금완료')return '<span class="settle-state settle-done">🟢 정산완료</span>';
+  if(s==='지급확인중')return '<span class="settle-state settle-checking">🟠 지급확인중</span>';
+  if(s==='근무완료'||s==='입금대기')return '<span class="settle-state settle-wait">🟡 지급대기</span>';
+  return '';
+}
 function renderWorkerInfoRow(a,job){
   const status=String(a.status||'지원').trim();
   const paid=status==='입금완료';
-  const workReady=status==='근무완료'||status==='입금대기'||paid;
-  const paymentText=paid?'입금완료':(workReady?'입금대기':'근무완료 전');
+  const cashChecking=status==='지급확인중';
+  const accountReady=hasAccountData(a);
+  const workReady=status==='근무완료'||status==='입금대기'||paid||cashChecking;
+  const paymentText=paid?'정산완료':(cashChecking?'지급확인중':(workReady?'지급대기':'근무완료 전'));
   const paymentClass=paid?'paydone':(workReady?'paywait':'wait');
-  const payButton=paid
-    ? `<button class="full green" disabled>입금 완료</button>`
-    : (workReady
-      ? `<button class="full green" onclick="markWorkerPaid(${a.id})">입금 완료</button>`
-      : `<div class="mini">현장관리자 근무완료 체크 후 입금완료 버튼이 표시됩니다.</div>`);
+  let payButton='';
+  if(paid){
+    payButton=`<button class="full green" disabled>정산 완료</button>`;
+  }else if(accountReady && (status==='근무완료'||status==='입금대기')){
+    payButton=`<button class="full green" onclick="markWorkerPaid(${a.id})">입금 완료</button>`;
+  }else if(!accountReady && (status==='근무완료'||status==='입금대기')){
+    payButton=`<div class="settle-note">계좌정보가 없습니다. 현장관리자 지급 확인과 근로자 수령 확인이 모두 완료되어야 정산완료 처리됩니다.</div>`;
+  }else if(cashChecking){
+    payButton=`<div class="settle-note">현장 지급 확인됨. 근로자 수령 확인 대기중입니다.</div>`;
+  }else{
+    payButton=`<div class="mini">현장관리자 근무완료 체크 후 입금완료 버튼이 표시됩니다.</div>`;
+  }
 
   return `<div class="card" style="margin:10px 0;background:rgba(15,23,42,.72)">
     <span class="status ${paymentClass}">${paymentText}</span>
+    ${settlementBadge(status)}
     <div class="worker-card-title" style="margin-top:10px">${esc(a.worker_name||'이름없음')}</div>
     <div class="meta">연락처: ${esc(a.phone||'번호없음')}<br>근무상태: ${esc(status)}<br><br><b>현장 정보</b><br>업체명: ${esc(job?job.title:'삭제된 공고')} · 관리자 연락처: ${esc(getManagerContact(job))}<br>현장 위치: ${esc(job?job.location:'-')}<br>근무시간: ${esc(job?job.work_time:'-')}<br>업체 일당: ${job?won(job.salary):'-'}<br>Crew 수수료(5%): ${job?won(feeAmount(job.salary)):'-'}<br>총 결제금액: ${job?won(totalPayment(job.salary)):'-'}<br>작업: ${esc(job?jobType(job):'-')}<br>출근: ${getAttendanceStatus(a)}<br><br><b>계좌 정보</b><br>${getBankInfo(a)}</div>
     ${payButton}
@@ -199,7 +227,7 @@ function getBankInfo(a){
   const bank=a.bank_name||a.bank||a.account_bank||(saved&&saved.bank)||'';
   const number=a.account_number||a.account||a.bank_account||(saved&&saved.account)||'';
   const holder=a.account_holder||a.holder||(saved&&saved.holder)||a.worker_name||'';
-  if(!bank&&!number&&!holder)return '계좌정보 없음';
+  if(!bank&&!number)return '계좌 없음 · 현장 지급/수령 확인 필요';
   return `${bank?esc(bank)+' ':''}${number?esc(number)+' ':''}${holder?'/ '+esc(holder):''}`
 }
 function getManagerContact(job){
@@ -239,6 +267,9 @@ async function markWorkerPaid(id){
   const status=String(app.status||'지원').trim();
   if(!['근무완료','입금대기'].includes(status)){
     return alert('현장관리자가 근무완료 체크를 해야 입금완료 처리할 수 있습니다.');
+  }
+  if(!hasAccountData(app)){
+    return alert('계좌정보가 없습니다. 현장 지급 확인/근로자 수령 확인 흐름으로 처리하세요.');
   }
   if(!confirm('이 근로자를 입금 완료 처리할까요?'))return;
   const {error}=await db.from('applications').update({status:'입금완료'}).eq('id',id);
