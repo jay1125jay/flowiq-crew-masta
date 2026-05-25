@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.8.1 JOB ALERT</title>
+<title>FlowIQ Crew MASTER v3.8.6 JOB ALERT</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -275,7 +275,7 @@ button.blue.full,button.green.full{
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.8.1 JOB ALERT</div>
+  <div class="sub">Internal Admin · v3.8.6 JOB ALERT</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -384,11 +384,16 @@ function showMasterNewJobNotice(count){
   setTimeout(()=>el.classList.add('hidden'),6000);
 }
 async function loginMaster(){const pw=document.getElementById('masterPassword').value;if(pw!==MASTER_PASSWORD){alert('비밀번호가 틀렸습니다.');return}document.getElementById('loginBox').classList.add('hidden');document.getElementById('masterApp').classList.remove('hidden');await unlockMasterAlertAudio();await loadMasterData(false);updateMasterJobBaseline();startMasterAutoRefresh()}
-async function loadMasterData(silent=false){const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});const tr=await db.from('attendance').select('*').order('created_at',{ascending:false});if(jr.error&&!silent)alert('jobs 오류: '+jr.error.message);if(ar.error&&!silent)alert('applications 오류: '+ar.error.message);if(tr.error&&!silent)alert('attendance 오류: '+tr.error.message);jobs=jr.data||[];applications=ar.data||[];attendance=tr.data||[];renderAll();updateMasterLiveStamp()}
-function renderAll(){renderJobFilters();renderJobs()}
+function getOpenMasterWorkerPanels(){return Array.from(document.querySelectorAll('[id^="workerInfo_"]:not(.hidden)')).map(el=>String(el.id).replace('workerInfo_',''))}
+function restoreOpenMasterWorkerPanels(openIds){(openIds||[]).forEach(id=>{const el=document.getElementById('workerInfo_'+id);if(el)el.classList.remove('hidden')})}
+async function fetchMasterData(silent=false){const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});const tr=await db.from('attendance').select('*').order('created_at',{ascending:false});if(jr.error&&!silent)alert('jobs 오류: '+jr.error.message);if(ar.error&&!silent)alert('applications 오류: '+ar.error.message);if(tr.error&&!silent)alert('attendance 오류: '+tr.error.message);jobs=jr.data||[];applications=ar.data||[];attendance=tr.data||[];updateMasterLiveStamp()}
+async function loadMasterData(silent=false){const openIds=getOpenMasterWorkerPanels();await fetchMasterData(silent);renderAll(openIds)}
+function renderAll(openIds=[]){renderJobFilters();renderJobs(openIds)}
 function updateMasterLiveStamp(){const el=document.getElementById('masterLiveStamp');if(el)el.innerText='자동 갱신 ON · 최근 반영: '+new Date().toLocaleTimeString('ko-KR')}
-async function masterAutoRefreshTick(force=false){if(masterSyncing || document.getElementById('masterApp')?.classList.contains('hidden'))return;masterSyncing=true;try{const before=new Set(masterKnownJobIds);await loadMasterData(true);requestAnimationFrame(renderAll);const after=getMasterJobKeys();const newKeys=after.filter(k=>!before.has(k));if(newKeys.length>0 && before.size>0){await playMasterNewJobSound();showMasterNewJobNotice(newKeys.length)}masterKnownJobIds=after}catch(e){console.warn('master live sync failed',e);if(force)alert('MASTER 자동 갱신 오류: '+(e.message||e))}finally{masterSyncing=false}}
-function startMasterAutoRefresh(){if(masterAutoRefreshTimer)return;masterAutoRefreshTimer=setInterval(()=>masterAutoRefreshTick(false),3000);setTimeout(()=>masterAutoRefreshTick(true),500)}
+async function masterAutoRefreshTick(force=false){if(masterSyncing || document.getElementById('masterApp')?.classList.contains('hidden'))return;masterSyncing=true;try{const before=new Set(masterKnownJobIds);const openIds=getOpenMasterWorkerPanels();await fetchMasterData(true);renderAll(openIds);const after=getMasterJobKeys();const newKeys=after.filter(k=>!before.has(k));if(newKeys.length>0 && before.size>0){await playMasterNewJobSound();showMasterNewJobNotice(newKeys.length)}masterKnownJobIds=after}catch(e){console.warn('master live sync failed',e);if(force)alert('MASTER 자동 갱신 오류: '+(e.message||e))}finally{masterSyncing=false}}
+function startMasterAutoRefresh(){if(masterAutoRefreshTimer)return;masterAutoRefreshTimer=setInterval(()=>masterAutoRefreshTick(false),2500);setTimeout(()=>masterAutoRefreshTick(true),500)}
+window.addEventListener('focus',()=>masterAutoRefreshTick(false));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)masterAutoRefreshTick(false)});
 async function refreshMaster(){
   const box=document.getElementById('jobsBox');
   if(box)box.innerHTML='<div class="card"><div class="sub">새로고침 중...</div></div>';
@@ -418,7 +423,7 @@ function renderJobFilters(){
   box.innerHTML=keys.map(k=>`<button class="${jobFilter===k?'active':''}" onclick="setJobFilter('${k}')">${k}(${counts[k]||0})</button>`).join('');
 }
 function setJobFilter(key){jobFilter=key;renderJobFilters();renderJobs()}
-function renderJobs(){
+function renderJobs(openIds=[]){
   const box=document.getElementById('jobsBox');
   const filteredJobs=jobFilter==='전체'?jobs:jobs.filter(j=>filterKey(j)===jobFilter);
   box.innerHTML=filteredJobs.length?filteredJobs.map(j=>{
@@ -458,7 +463,8 @@ function renderJobs(){
       <button class="full blue" onclick="toggleWorkerInfo(${j.id})">정보 보기</button>
       <div id="workerInfo_${j.id}" class="hidden" style="margin-top:12px">${workerRows}</div>
     </div>`
-  }).join(''):`<div class="card"><div class="sub">${jobFilter} 공고가 없습니다.</div></div>`
+  }).join(''):`<div class="card"><div class="sub">${jobFilter} 공고가 없습니다.</div></div>`;
+  restoreOpenMasterWorkerPanels(openIds);
 }
 function guardPost(currentText){
   if(currentText==='공고마감')return alert('공고마감 상태입니다. 먼저 마감해제를 눌러주세요.');
