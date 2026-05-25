@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.8.6 JOB ALERT</title>
+<title>FlowIQ Crew MASTER v3.8.7 JOB ALERT</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -434,9 +434,12 @@ function renderJobs(openIds=[]){
     const canDeposit=current==='입금대기'&&!full;
     const canPost=current==='입금확인'&&!full;
     const jobApps=applications.filter(a=>Number(a.job_id)===Number(j.id));
-    const approved=jobApps.filter(a=>['승인','출근완료','근무완료','입금대기','지급확인중','수령확인완료','입금완료'].includes(a.status||'지원')).length;
-    const checked=jobApps.filter(a=>attendance.some(t=>String(t.phone||'')===String(a.phone||'')&&String(t.job_id||'')===String(j.id))).length;
-    const workerRows=jobApps.length?jobApps.map(a=>renderWorkerInfoRow(a,j)).join(''):`<div class="danger">이 공고에 연결된 근로자가 없습니다.</div>`;
+    const approvedApps=jobApps.filter(a=>isApprovedSlotStatus(a.status));
+    const approved=approvedApps.length;
+    const checked=approvedApps.filter(a=>attendance.some(t=>String(t.phone||'')===String(a.phone||'')&&String(t.job_id||'')===String(j.id))).length;
+    const workerRows=approvedApps.length
+      ? approvedApps.map(a=>renderWorkerInfoRow(a,j)).join('')
+      : `<div class="danger">승인 완료된 근로자가 없습니다.<br><span class="mini">미선정 · 거절 · 지원취소 · 승인 전 지원자는 표시하지 않습니다.</span></div>`;
     const depositBtn=canDeposit
       ? `<button class="yellow" onclick="setJobStatus(${j.id},'입금확인')">입금완료</button>`
       : `<button class="yellow" disabled>${current==='입금확인'||current==='게시중'?'입금완료':'입금완료'}</button>`;
