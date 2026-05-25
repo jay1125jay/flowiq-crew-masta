@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.5.0 SETTLEMENT</title>
+<title>FlowIQ Crew MASTER v3.8.1 JOB ALERT</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -259,12 +259,23 @@ button.blue.full,button.green.full{
   box-shadow:0 12px 28px rgba(37,99,235,.18) !important;
 }
 
+.master-new-job-alert{
+  margin-top:10px;
+  background:rgba(37,99,235,.16);
+  border:1px solid rgba(96,165,250,.26);
+  color:#dbeafe;
+  border-radius:16px;
+  padding:11px 12px;
+  font-size:13px;
+  font-weight:900;
+}
+
 </style>
 </head>
 <body>
 <main class="app">
   <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.5.0 PREMIUM UI</div>
+  <div class="sub">Internal Admin · v3.8.1 JOB ALERT</div>
 
   <section id="loginBox" class="card notice">
     <div class="title">MASTER 로그인</div>
@@ -277,7 +288,9 @@ button.blue.full,button.green.full{
     <div class="card notice">
       <div class="title">MASTER 운영센터</div>
       <div class="sub">입금확인 → 게시승인 → 공고 노출을 관리합니다.</div>
-      <button class="full green" onclick="refreshMaster()">새로고침</button>
+      <div class="sub" id="masterLiveStamp">자동 갱신: 대기 중</div>
+      <div id="masterNewJobNotice" class="master-new-job-alert hidden">🔔 신규 공고가 등록되었습니다.</div>
+      <button class="full green" onclick="refreshMaster()">즉시 갱신</button>
     </div>
 
     <div class="section">공고 운영 관리</div>
@@ -295,7 +308,7 @@ const REAL_SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 const db=supabase.createClient(SUPABASE_URL,REAL_SUPABASE_KEY);
 const MASTER_PASSWORD="1234";
 const COMPANY_NAMES={demo_company:"FlowIQ Demo",alpha:"Alpha Logistics",beta:"Beta Factory"};
-let jobs=[];let applications=[];let attendance=[];let jobFilter="전체";
+let jobs=[];let applications=[];let attendance=[];let jobFilter="전체";let masterAutoRefreshTimer=null;let masterSyncing=false;let masterKnownJobIds=[];let masterAlertAudioCtx=null;
 function won(n){return Number(n||0).toLocaleString("ko-KR")+"원"}
 function feeAmount(base){return Math.round(Number(base||0)*0.05)}
 function totalPayment(base){return Number(base||0)+feeAmount(base)}
@@ -325,15 +338,61 @@ function statusLabel(j){const st=jobStatus(j);return `<span class="status ${stat
 function cleanType(type){return String(type||"공고").replace(/^\[(입금대기|입금전|입금확인|입금완료|게시중|공고마감)(?::(입금대기|입금전|입금확인|입금완료|게시중))?\]\s*/,"").trim()||"공고"}
 function makeType(status,type){return `[${status}] `+cleanType(type)}
 function makeClosedType(prev,type){return `[공고마감:${prev||"입금대기"}] `+cleanType(type)}
-function isJobFull(j){const needed=Number(j&&j.needed||0);const applied=Number(j&&j.applied||0);return needed>0&&applied>=needed}
+function isApprovedSlotStatus(status){return ['승인','출근완료','근무완료','입금대기','지급확인중','수령확인완료','입금완료','정산완료'].includes(String(status||'').trim())}
+function getApplicationsForJob(jobId){return (applications||[]).filter(a=>Number(a.job_id)===Number(jobId))}
+function getApprovedSlotCount(jobId){return getApplicationsForJob(jobId).filter(a=>isApprovedSlotStatus(a.status)).length}
+function isJobFull(j){const needed=Number(j&&j.needed||0);return needed>0&&getApprovedSlotCount(j.id)>=needed}
 function visibleStatus(j){return isJobFull(j)?'공고마감':jobStatus(j)}
-async function loginMaster(){const pw=document.getElementById('masterPassword').value;if(pw!==MASTER_PASSWORD){alert('비밀번호가 틀렸습니다.');return}document.getElementById('loginBox').classList.add('hidden');document.getElementById('masterApp').classList.remove('hidden');await loadMasterData()}
-async function loadMasterData(){const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});const tr=await db.from('attendance').select('*').order('created_at',{ascending:false});if(jr.error)alert('jobs 오류: '+jr.error.message);if(ar.error)alert('applications 오류: '+ar.error.message);if(tr.error)alert('attendance 오류: '+tr.error.message);jobs=jr.data||[];applications=ar.data||[];attendance=tr.data||[];renderAll()}
+function getMasterJobKeys(){return (jobs||[]).map(j=>String(j.id)).filter(Boolean)}
+function updateMasterJobBaseline(){masterKnownJobIds=getMasterJobKeys()}
+async function unlockMasterAlertAudio(){
+  try{
+    const AudioContext=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContext)return false;
+    if(!masterAlertAudioCtx)masterAlertAudioCtx=new AudioContext();
+    if(masterAlertAudioCtx.state==='suspended')await masterAlertAudioCtx.resume();
+    return masterAlertAudioCtx.state==='running';
+  }catch(e){console.warn('master audio unlock failed',e);return false}
+}
+function masterTone(ctx,freq,start,duration,volume){
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.type='sine';
+  osc.frequency.setValueAtTime(freq,start);
+  gain.gain.setValueAtTime(0.0001,start);
+  gain.gain.exponentialRampToValueAtTime(volume,start+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001,start+duration);
+  osc.connect(gain); gain.connect(ctx.destination); osc.start(start); osc.stop(start+duration+0.04);
+}
+async function playMasterNewJobSound(){
+  try{
+    await unlockMasterAlertAudio();
+    const ctx=masterAlertAudioCtx;
+    if(ctx && ctx.state==='running'){
+      const now=ctx.currentTime;
+      masterTone(ctx,880,now,0.18,0.42);
+      masterTone(ctx,1180,now+0.23,0.22,0.45);
+    }
+    if(navigator.vibrate)navigator.vibrate([180,80,180]);
+  }catch(e){console.warn('master alert sound blocked',e)}
+}
+function showMasterNewJobNotice(count){
+  const el=document.getElementById('masterNewJobNotice');
+  if(!el)return;
+  el.textContent=`🔔 신규 공고 ${count||1}건이 등록되었습니다. 입금확인을 진행해주세요.`;
+  el.classList.remove('hidden');
+  setTimeout(()=>el.classList.add('hidden'),6000);
+}
+async function loginMaster(){const pw=document.getElementById('masterPassword').value;if(pw!==MASTER_PASSWORD){alert('비밀번호가 틀렸습니다.');return}document.getElementById('loginBox').classList.add('hidden');document.getElementById('masterApp').classList.remove('hidden');await unlockMasterAlertAudio();await loadMasterData(false);updateMasterJobBaseline();startMasterAutoRefresh()}
+async function loadMasterData(silent=false){const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});const tr=await db.from('attendance').select('*').order('created_at',{ascending:false});if(jr.error&&!silent)alert('jobs 오류: '+jr.error.message);if(ar.error&&!silent)alert('applications 오류: '+ar.error.message);if(tr.error&&!silent)alert('attendance 오류: '+tr.error.message);jobs=jr.data||[];applications=ar.data||[];attendance=tr.data||[];renderAll();updateMasterLiveStamp()}
 function renderAll(){renderJobFilters();renderJobs()}
+function updateMasterLiveStamp(){const el=document.getElementById('masterLiveStamp');if(el)el.innerText='자동 갱신 ON · 최근 반영: '+new Date().toLocaleTimeString('ko-KR')}
+async function masterAutoRefreshTick(force=false){if(masterSyncing || document.getElementById('masterApp')?.classList.contains('hidden'))return;masterSyncing=true;try{const before=new Set(masterKnownJobIds);await loadMasterData(true);requestAnimationFrame(renderAll);const after=getMasterJobKeys();const newKeys=after.filter(k=>!before.has(k));if(newKeys.length>0 && before.size>0){await playMasterNewJobSound();showMasterNewJobNotice(newKeys.length)}masterKnownJobIds=after}catch(e){console.warn('master live sync failed',e);if(force)alert('MASTER 자동 갱신 오류: '+(e.message||e))}finally{masterSyncing=false}}
+function startMasterAutoRefresh(){if(masterAutoRefreshTimer)return;masterAutoRefreshTimer=setInterval(()=>masterAutoRefreshTick(false),3000);setTimeout(()=>masterAutoRefreshTick(true),500)}
 async function refreshMaster(){
   const box=document.getElementById('jobsBox');
   if(box)box.innerHTML='<div class="card"><div class="sub">새로고침 중...</div></div>';
-  await loadMasterData();
+  await loadMasterData(false);
 }
 async function reopenJob(id){
   const job=jobs.find(j=>Number(j.id)===Number(id));
@@ -388,7 +447,7 @@ function renderJobs(){
         </div>
         <button class="red" onclick="deleteJob(${j.id})">삭제</button>
       </div>
-      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 업체 일당: ${won(j.salary)}<br>💸 Crew 수수료(5%): ${won(feeAmount(j.salary))}<br>🧾 총 결제금액: ${won(totalPayment(j.salary))}<br>👥 ${j.applied||0}/${j.needed||0}${full?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}<br>지원 ${jobApps.length}명 · 승인 ${approved}명 · 출근 ${checked}명</div>
+      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 업체 일당: ${won(j.salary)}<br>💸 Crew 수수료(5%): ${won(feeAmount(j.salary))}<br>🧾 총 결제금액: ${won(totalPayment(j.salary))}<br>👥 승인 ${approved}/${j.needed||0}${full?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}<br>지원 ${jobApps.length}명 · 승인 ${approved}명 · 출근 ${checked}명</div>
       <div class="grid2" style="margin-top:12px">
         ${depositBtn}
         ${postBtn}
