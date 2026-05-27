@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v4.0.6 DATE PAY NOTICE</title>
+<title>FlowIQ Crew MASTER v4.0.7 COMPANY INFO</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 
 /* ===== FlowIQ MASTER v4.0.6 Date + Pay Notice Patch ===== */
@@ -30,7 +30,7 @@ function render(){
     const matched=matchApps(j.id);
     const remain=Math.max(0,(Number(j.needed)||0)-matched.length);
     const workers=matched.length?matched.map(a=>`<div class="worker"><div class="worker-name">${esc(a.worker_name||a.name||'이름없음')} · 매칭 ${matchAppsByPhone(a.phone)}회 · 거절 ${rejectAppsByPhone(a.phone)}회</div><div class="worker-meta">${esc(a.phone||'번호없음')}</div></div>`).join(''):`<div class="worker"><div class="worker-meta">아직 승인된 근로자가 없습니다.</div></div>`;
-    return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div><div class="info">📅 ${esc(schedule.dateText)}</div><div class="info">⏰ ${esc(schedule.timeText)}</div><div class="info">📍 ${esc(j.location||'-')}</div><div class="job-pay-grid"><div class="info pay-line-clean"><span class="pay-emoji">👥</span><span class="pay-text">모집 ${Number(j.needed)||0}명 · 매칭 ${matched.length}명 · 남은 ${remain}명</span></div><div class="info pay-line-clean"><span class="pay-emoji">💰</span><span class="pay-text">일당 ${won(j.salary)}</span></div><div class="info pay-line-clean"><span class="pay-emoji">💸</span><span class="pay-text">플랫폼 수수료 ${won(fee(j))}</span></div></div><div class="pay-direct-note"><span class="note-mark">※</span><span class="note-text">FlowIQ Crew는 플랫폼 수수료만 확인합니다.<br>근로자 임금은 업체가 직접 지급합니다.</span></div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`;
+    return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div>${renderCompanyInfoMaster(j)}<div class="info">📅 ${esc(schedule.dateText)}</div><div class="info">⏰ ${esc(schedule.timeText)}</div><div class="info">📍 ${esc(j.location||'-')}</div><div class="job-pay-grid"><div class="info pay-line-clean"><span class="pay-emoji">👥</span><span class="pay-text">모집 ${Number(j.needed)||0}명 · 매칭 ${matched.length}명 · 남은 ${remain}명</span></div><div class="info pay-line-clean"><span class="pay-emoji">💰</span><span class="pay-text">일당 ${won(j.salary)}</span></div><div class="info pay-line-clean"><span class="pay-emoji">💸</span><span class="pay-text">플랫폼 수수료 ${won(fee(j))}</span></div></div><div class="pay-direct-note"><span class="note-mark">※</span><span class="note-text">FlowIQ Crew는 플랫폼 수수료만 확인합니다.<br>근로자 임금은 업체가 직접 지급합니다.</span></div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`;
   }).join('')||'<div class="card"><div class="sub">공고가 없습니다.</div></div>';
 }
 
@@ -75,6 +75,20 @@ function render(){
 .pay-direct-note .note-text{
   flex:1;
   min-width:0;
+}
+
+
+
+/* ===== FlowIQ MASTER v4.0.7 Company Info Box ===== */
+.master-company-box{
+  background:rgba(2,6,23,.55);
+  border:1px solid rgba(148,163,184,.14);
+  border-radius:18px;
+  padding:12px;
+  margin:10px 0 12px;
+}
+.master-company-box .info{
+  margin:5px 0;
 }
 
 </style>
@@ -142,6 +156,28 @@ function parseWorkScheduleMaster(job){
   const fmt=(d)=>{const mm=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return mm?`${mm[1]}.${mm[2]}.${mm[3]}`:String(d||'날짜 미정')};
   return {dateText:start?(end&&end!==start?`${fmt(start)} ~ ${fmt(end)}`:fmt(start)):'날짜 미정', timeText:time||'-'};
 }
+
+function getJobCompanyInfoMaster(job){
+  let meta={};
+  const lang=String(job && job.language || '');
+  const marker='||FIQ_META||';
+  if(lang.includes(marker)){
+    try{ meta=JSON.parse(lang.split(marker).pop()||'{}')||{}; }catch(e){ meta={}; }
+  }
+  return {
+    company: meta.companyName || job?.company_name || job?.company || '현장 업체',
+    manager: meta.managerName || job?.manager_name || job?.manager || '현장 담당자',
+    phone: meta.managerContact || job?.manager_contact || job?.phone || ''
+  };
+}
+function renderCompanyInfoMaster(job){
+  const c=getJobCompanyInfoMaster(job);
+  return `<div class="master-company-box">
+    <div class="info">🏢 업체명 ${esc(c.company||'현장 업체')}</div>
+    <div class="info">👤 담당자 ${esc(c.manager||'현장 담당자')}</div>
+    <div class="info">📞 연락처 ${esc(c.phone||'연락처 없음')}</div>
+  </div>`;
+}
 function render(){
   jobCount.innerText=jobs.length;
   pendingCount.innerText=jobs.filter(j=>status(j)==='입금대기').length;
@@ -155,7 +191,7 @@ function render(){
     const matched=matchApps(j.id);
     const remain=Math.max(0,(Number(j.needed)||0)-matched.length);
     const workers=matched.length?matched.map(a=>`<div class="worker"><div class="worker-name">${esc(a.worker_name||a.name||'이름없음')} · 매칭 ${matchAppsByPhone(a.phone)}회 · 거절 ${rejectAppsByPhone(a.phone)}회</div><div class="worker-meta">${esc(a.phone||'번호없음')}</div></div>`).join(''):`<div class="worker"><div class="worker-meta">아직 승인된 근로자가 없습니다.</div></div>`;
-    return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div><div class="info">📅 ${esc(schedule.dateText)}</div><div class="info">⏰ ${esc(schedule.timeText)}</div><div class="info">📍 ${esc(j.location||'-')}</div><div class="job-pay-grid"><div class="info pay-line-clean"><span class="pay-emoji">👥</span><span class="pay-text">모집 ${Number(j.needed)||0}명 · 매칭 ${matched.length}명 · 남은 ${remain}명</span></div><div class="info pay-line-clean"><span class="pay-emoji">💰</span><span class="pay-text">일당 ${won(j.salary)}</span></div><div class="info pay-line-clean"><span class="pay-emoji">💸</span><span class="pay-text">플랫폼 수수료 ${won(fee(j))}</span></div></div><div class="pay-direct-note"><span class="note-mark">※</span><span class="note-text">FlowIQ Crew는 플랫폼 수수료만 확인합니다.<br>근로자 임금은 업체가 직접 지급합니다.</span></div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`;
+    return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div>${renderCompanyInfoMaster(j)}<div class="info">📅 ${esc(schedule.dateText)}</div><div class="info">⏰ ${esc(schedule.timeText)}</div><div class="info">📍 ${esc(j.location||'-')}</div><div class="job-pay-grid"><div class="info pay-line-clean"><span class="pay-emoji">👥</span><span class="pay-text">모집 ${Number(j.needed)||0}명 · 매칭 ${matched.length}명 · 남은 ${remain}명</span></div><div class="info pay-line-clean"><span class="pay-emoji">💰</span><span class="pay-text">일당 ${won(j.salary)}</span></div><div class="info pay-line-clean"><span class="pay-emoji">💸</span><span class="pay-text">플랫폼 수수료 ${won(fee(j))}</span></div></div><div class="pay-direct-note"><span class="note-mark">※</span><span class="note-text">FlowIQ Crew는 플랫폼 수수료만 확인합니다.<br>근로자 임금은 업체가 직접 지급합니다.</span></div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`;
   }).join('')||'<div class="card"><div class="sub">공고가 없습니다.</div></div>';
 }
 
