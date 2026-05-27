@@ -3,579 +3,62 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FlowIQ Crew MASTER v3.8.7 JOB ALERT</title>
+<title>FlowIQ Crew MASTER v4.0 SIMPLE MATCHING MVP</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:#020617;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;display:flex;justify-content:center}
-.app{width:100%;max-width:460px;min-height:100vh;padding:24px 18px 90px}.brand{font-size:28px;font-weight:950;background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sub{color:#94a3b8;font-size:14px;line-height:1.45}.title{font-size:21px;font-weight:900;margin-bottom:6px}.section{font-size:21px;font-weight:950;margin:24px 0 12px}.card{background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(17,24,39,.98));border:1px solid rgba(148,163,184,.12);border-radius:26px;padding:18px;margin-bottom:14px;box-shadow:0 12px 34px rgba(0,0,0,.28)}.notice{border-color:rgba(96,165,250,.22);background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(59,130,246,.08))}input{width:100%;min-height:54px;border:1px solid rgba(255,255,255,.08);background:#0f172a;color:white;border-radius:18px;padding:0 14px;font-size:15px;margin:10px 0}button{border:0;border-radius:18px;min-height:50px;padding:0 14px;color:#fff;font-weight:850;background:#334155;cursor:pointer}.blue{background:#2563eb}.green{background:#059669}.red{background:#dc2626}.gray{background:#334155}.yellow{background:#d97706}.full{width:100%;margin-top:8px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.hidden{display:none!important}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;background:rgba(59,130,246,.16);color:#bfdbfe;margin-top:6px}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.meta{font-size:13px;color:#cbd5e1;line-height:1.5;margin-top:8px}.danger{background:rgba(239,68,68,.12);border:1px solid rgba(248,113,113,.22);color:#fecaca;border-radius:18px;padding:12px;font-size:13px}.status{display:inline-flex;padding:7px 12px;border-radius:999px;color:white;font-size:12px;font-weight:950;margin-top:8px}.wait{background:#d97706}.paid{background:#2563eb}.live{background:#059669}.closed{background:#dc2626}button:disabled{opacity:.45;cursor:not-allowed}.mini{font-size:12px;color:#94a3b8;margin-top:6px}.paydone{background:#16a34a}.paywait{background:#2563eb}.worker-card-title{font-size:18px;font-weight:950;margin-bottom:6px}
-
-/* v3.1.9.3 UI TEXT FIX: prevent filter/buttons/cards from being cut off */
-.filter-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 14px;padding-bottom:4px;width:100%}
-.filter-row button{width:100%;min-width:0;min-height:42px;border-radius:999px;font-size:12px;background:#1e293b;white-space:normal;line-height:1.2;padding:8px 10px}
-.filter-row button:first-child{grid-column:1 / -1}
-.filter-row button.active{background:#2563eb;box-shadow:0 8px 22px rgba(37,99,235,.35)}
-.row{flex-wrap:wrap}
-.row>div{min-width:0;max-width:100%}
-.card{overflow:hidden}
-.title{word-break:keep-all;overflow-wrap:anywhere}
-.meta{word-break:keep-all;overflow-wrap:anywhere}
-.grid2{grid-template-columns:1fr 1fr}
-@media(max-width:380px){.app{padding:20px 14px 80px}.grid2{grid-template-columns:1fr}.filter-row{grid-template-columns:1fr}button{font-size:13px;padding:0 10px}}
-
-.settle-note{background:rgba(245,158,11,.12);border:1px solid rgba(251,191,36,.20);color:#fde68a;border-radius:16px;padding:12px;font-size:12px;line-height:1.45;margin-top:10px}
-.settle-state{display:inline-flex;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:950;margin-top:8px}
-.settle-wait{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff}
-.settle-checking{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff}
-.settle-done{background:linear-gradient(135deg,#059669,#22c55e);color:#fff}
-
-
-/* ===== FlowIQ Crew v3.5.0 Premium Button UI ===== */
-:root{
-  --btn-shadow-soft:0 10px 26px rgba(0,0,0,.26);
-  --btn-shadow-blue:0 12px 28px rgba(37,99,235,.34);
-  --btn-shadow-cyan:0 12px 28px rgba(6,182,212,.30);
-  --btn-shadow-emerald:0 12px 28px rgba(16,185,129,.30);
-  --btn-shadow-amber:0 12px 28px rgba(245,158,11,.30);
-  --btn-shadow-violet:0 12px 28px rgba(139,92,246,.30);
-  --btn-shadow-red:0 12px 28px rgba(220,38,38,.28);
-}
-button{
-  position:relative;
-  overflow:hidden;
-  letter-spacing:-.2px;
-  border:1px solid rgba(255,255,255,.08) !important;
-  background:linear-gradient(135deg,#1e293b,#0f172a) !important;
-  box-shadow:var(--btn-shadow-soft), inset 0 1px 0 rgba(255,255,255,.08) !important;
-}
-button::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,.16),transparent);
-  transform:translateX(-120%);
-  transition:.45s ease;
-  pointer-events:none;
-}
-button:active{transform:scale(.985)}
-button:hover::after{transform:translateX(120%)}
-button:disabled{
-  background:linear-gradient(135deg,#334155,#1e293b) !important;
-  color:#94a3b8 !important;
-  opacity:.58 !important;
-  box-shadow:none !important;
-}
-.blue{
-  background:linear-gradient(135deg,#1d4ed8,#38bdf8) !important;
-  box-shadow:var(--btn-shadow-blue), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-.green{
-  background:linear-gradient(135deg,#047857,#34d399) !important;
-  box-shadow:var(--btn-shadow-emerald), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-.gray{
-  background:linear-gradient(135deg,#334155,#111827) !important;
-  color:#e2e8f0 !important;
-}
-.red{
-  background:linear-gradient(135deg,#b91c1c,#fb7185) !important;
-  box-shadow:var(--btn-shadow-red), inset 0 1px 0 rgba(255,255,255,.16) !important;
-}
-.yellow{
-  background:linear-gradient(135deg,#b45309,#f59e0b) !important;
-  box-shadow:var(--btn-shadow-amber), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-/* 기능별 색상 분리 */
-button[onclick*="showQR"],
-button[onclick*="completeQR"],
-button[onclick*="openSelectedMap"],
-button[onclick*="openMap"]{
-  background:linear-gradient(135deg,#0891b2,#22d3ee) !important;
-  box-shadow:var(--btn-shadow-cyan), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-button[onclick*="createJob"],
-button[onclick*="saveSignupAccount"],
-button[onclick*="login"],
-button[onclick*="Login"]{
-  background:linear-gradient(135deg,#2563eb,#7c3aed) !important;
-  box-shadow:var(--btn-shadow-blue), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-button[onclick*="Approve"],
-button[onclick*="approve"],
-button[onclick*="게시승인"]{
-  background:linear-gradient(135deg,#059669,#86efac) !important;
-  box-shadow:var(--btn-shadow-emerald), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-button[onclick*="markWorkComplete"],
-button[onclick*="근무완료"]{
-  background:linear-gradient(135deg,#ea580c,#fbbf24) !important;
-  color:#fff !important;
-  box-shadow:var(--btn-shadow-amber), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-button[onclick*="managerConfirmCashPaid"],
-button[onclick*="지급"],
-button[onclick*="setJobStatus"]{
-  background:linear-gradient(135deg,#7c3aed,#ec4899) !important;
-  box-shadow:var(--btn-shadow-violet), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-button[onclick*="workerConfirmCashReceived"],
-button[onclick*="markWorkerPaid"]{
-  background:linear-gradient(135deg,#10b981,#22c55e) !important;
-  box-shadow:var(--btn-shadow-emerald), inset 0 1px 0 rgba(255,255,255,.18) !important;
-}
-button[onclick*="Reject"],
-button[onclick*="reject"],
-button[onclick*="delete"],
-button[onclick*="Delete"],
-button[onclick*="공고마감"],
-button[onclick*="closeMapChoice"]{
-  background:linear-gradient(135deg,#be123c,#f43f5e) !important;
-  box-shadow:var(--btn-shadow-red), inset 0 1px 0 rgba(255,255,255,.16) !important;
-}
-button[onclick*="refresh"],
-button[onclick*="refreshData"],
-button[onclick*="goRoleSelect"],
-button[onclick*="goLanguageSelect"],
-button[onclick*="history.back"],
-button[onclick*="toggle"],
-button[onclick*="copyCrewAccount"]{
-  background:linear-gradient(135deg,#475569,#1e293b) !important;
-  box-shadow:0 8px 20px rgba(15,23,42,.28), inset 0 1px 0 rgba(255,255,255,.10) !important;
-}
-/* 하단 탭은 과한 발광 방지 */
-.bottom-nav button{
-  background:#020617 !important;
-  box-shadow:none !important;
-}
-.bottom-nav button.active{
-  background:linear-gradient(135deg,#2563eb,#7c3aed) !important;
-  box-shadow:0 8px 22px rgba(37,99,235,.38) !important;
-}
-/* 눌러야 할 핵심 버튼 강조 */
-.manager-worker-actions button,
-.manager-worker-actions.work-done-center button,
-.payment-preview button,
-#qrActionBtn{
-  border-width:1px !important;
-  filter:saturate(1.08);
-}
-
-
-/* MASTER 전용 색상: 운영/정산 강조 */
-#jobFilterBox button.active{
-  background:linear-gradient(135deg,#7c3aed,#2563eb) !important;
-  box-shadow:0 10px 26px rgba(124,58,237,.35) !important;
-}
-button[onclick*="setJobStatus"]{
-  background:linear-gradient(135deg,#7c3aed,#ec4899) !important;
-}
-button[onclick*="reopenJob"]{
-  background:linear-gradient(135deg,#0891b2,#22d3ee) !important;
-}
-button[onclick*="markWorkerPaid"]{
-  background:linear-gradient(135deg,#059669,#22c55e) !important;
-}
-
-
-
-/* ===== FlowIQ Crew v3.5.1 Minimal Premium UI =====
-:root{
-  --fiq-bg:#020617;
-  --fiq-card:#0f172a;
-  --fiq-card2:#111827;
-  --fiq-line:rgba(148,163,184,.14);
-  --fiq-text:#f8fafc;
-  --fiq-sub:#94a3b8;
-  --fiq-blue:#2563eb;
-  --fiq-blue2:#1d4ed8;
-  --fiq-green:#059669;
-  --fiq-green2:#047857;
-  --fiq-amber:#d97706;
-  --fiq-amber2:#b45309;
-  --fiq-red:#dc2626;
-  --fiq-red2:#b91c1c;
-  --fiq-slate:#334155;
-}
-button{
-  background:linear-gradient(180deg,#1e293b,#0f172a) !important;
-  color:var(--fiq-text) !important;
-  border:1px solid rgba(148,163,184,.16) !important;
-  box-shadow:0 8px 20px rgba(0,0,0,.22) !important;
-}
-button:hover{filter:brightness(1.06)}
-button:active{transform:scale(.985)}
-.blue, button.blue{
-  background:linear-gradient(135deg,var(--fiq-blue),var(--fiq-blue2)) !important;
-  border-color:rgba(96,165,250,.30) !important;
-  box-shadow:0 10px 26px rgba(37,99,235,.24) !important;
-}
-.green, button.green{
-  background:linear-gradient(135deg,var(--fiq-green),var(--fiq-green2)) !important;
-  border-color:rgba(52,211,153,.26) !important;
-  box-shadow:0 10px 26px rgba(5,150,105,.20) !important;
-}
-.gray, button.gray{
-  background:linear-gradient(180deg,#334155,#1e293b) !important;
-  border-color:rgba(148,163,184,.18) !important;
-  box-shadow:0 8px 20px rgba(15,23,42,.22) !important;
-}
-.red, button.red{
-  background:linear-gradient(135deg,var(--fiq-red),var(--fiq-red2)) !important;
-  border-color:rgba(248,113,113,.28) !important;
-  box-shadow:0 10px 26px rgba(220,38,38,.22) !important;
-}
-/* action-specific but still restrained */
-button[onclick*="approve"],button[onclick*="Approve"],button[onclick*="게시승인"],button[onclick*="confirmDeposit"],button[onclick*="markPaid"]{
-  background:linear-gradient(135deg,var(--fiq-blue),var(--fiq-blue2)) !important;
-}
-button[onclick*="complete"],button[onclick*="WorkComplete"],button[onclick*="settle"],button[onclick*="Receipt"],button[onclick*="수령"],button[onclick*="지급"]{
-  background:linear-gradient(135deg,var(--fiq-green),var(--fiq-green2)) !important;
-}
-button[onclick*="close"],button[onclick*="deadline"],button[onclick*="마감"]{
-  background:linear-gradient(135deg,var(--fiq-amber),var(--fiq-amber2)) !important;
-}
-button[onclick*="reject"],button[onclick*="delete"],button[onclick*="Delete"],button[onclick*="trash"]{
-  background:linear-gradient(135deg,var(--fiq-red),var(--fiq-red2)) !important;
-}
-.card,.manager-card-clean,.payment-preview{
-  border-color:var(--fiq-line) !important;
-  box-shadow:0 12px 32px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.03) !important;
-}
-.badge,.type,.manager-status-pill,.settle-state{
-  box-shadow:none !important;
-}
-/* reduce rainbow progress: only current/done remain elegant */
-.progress-step.done,.progress-step.current{
-  background:linear-gradient(135deg,#1e3a8a,#2563eb) !important;
-}
-.progress-paid.done,.progress-paid.current,.progress-complete.done{
-  background:linear-gradient(135deg,#065f46,#059669) !important;
-}
-.progress-waitpay.current,.progress-waitpay.done,.progress-complete.current{
-  background:linear-gradient(135deg,#92400e,#d97706) !important;
-}
-/* subtle focus for must-click buttons */
-button.blue.full,button.green.full{
-  box-shadow:0 12px 28px rgba(37,99,235,.18) !important;
-}
-
-.master-new-job-alert{
-  margin-top:10px;
-  background:rgba(37,99,235,.16);
-  border:1px solid rgba(96,165,250,.26);
-  color:#dbeafe;
-  border-radius:16px;
-  padding:11px 12px;
-  font-size:13px;
-  font-weight:900;
-}
-
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;padding:0;min-height:100%;background:radial-gradient(circle at top left,rgba(59,130,246,.18),transparent 32%),#020617;color:white;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}body{display:flex;justify-content:center}.app{width:100%;max-width:760px;min-height:100vh;padding:26px 16px 80px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.brand{font-size:28px;font-weight:950;background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sub{color:#94a3b8;font-size:14px;line-height:1.45}.card{background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(17,24,39,.96));border:1px solid rgba(148,163,184,.14);border-radius:26px;padding:18px;margin-bottom:14px;box-shadow:0 12px 34px rgba(0,0,0,.28)}.title{font-size:20px;font-weight:900;margin-bottom:6px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.tile{background:rgba(2,6,23,.65);border:1px solid rgba(148,163,184,.12);border-radius:18px;padding:13px;text-align:center}.tile b{display:block;font-size:22px}.tile span{font-size:12px;color:#94a3b8}input{width:100%;min-height:54px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:#0f172a;color:white;padding:0 15px;font-size:15px;margin:8px 0 12px}button{border:0;color:white;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:18px;min-height:48px;font-size:14px;font-weight:900;cursor:pointer;padding:0 14px}.green{background:linear-gradient(135deg,#059669,#10b981)}.gray{background:linear-gradient(135deg,#475569,#1e293b)}.red{background:linear-gradient(135deg,#b91c1c,#ef4444)}.full{width:100%}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;background:rgba(59,130,246,.18);color:#bfdbfe;font-weight:900;font-size:12px}.info{color:#cbd5e1;font-size:14px;margin:8px 0;line-height:1.45}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.worker{background:rgba(2,6,23,.55);border:1px solid rgba(148,163,184,.10);border-radius:18px;padding:13px;margin-top:10px}.worker-name{font-weight:900}.worker-meta{color:#94a3b8;font-size:13px;margin-top:4px}.hidden{display:none}.notice{background:rgba(37,99,235,.12);border-color:rgba(96,165,250,.22)}@media(max-width:560px){.grid{grid-template-columns:1fr 1fr}.actions{grid-template-columns:1fr}.row{flex-direction:column}}
 </style>
 </head>
 <body>
 <main class="app">
-  <div class="brand">FlowIQ MASTER</div>
-  <div class="sub">Internal Admin · v3.8.6 JOB ALERT</div>
+  <header class="top">
+    <div><div class="brand">FlowIQ MASTER</div><div class="sub">v4.0 단순 매칭 · 수수료 5% 확인</div></div>
+    <button class="gray" onclick="loadAll(true)">새로고침</button>
+  </header>
 
-  <section id="loginBox" class="card notice">
+  <section id="login" class="card">
     <div class="title">MASTER 로그인</div>
-    <div class="sub">내부 관리자 전용 페이지입니다.</div>
-    <input id="masterPassword" type="password" placeholder="MASTER 비밀번호" />
-    <button class="full blue" onclick="loginMaster()">접속</button>
+    <div class="sub">관리자 공고 수수료 확인 후 게시 승인합니다.</div>
+    <input id="masterPw" type="password" placeholder="MASTER 비밀번호">
+    <button class="full" onclick="loginMaster()">접속</button>
   </section>
 
-  <section id="masterApp" class="hidden">
+  <section id="dash" class="hidden">
     <div class="card notice">
-      <div class="title">MASTER 운영센터</div>
-      <div class="sub">입금확인 → 게시승인 → 공고 노출을 관리합니다.</div>
-      <div class="sub" id="masterLiveStamp">자동 갱신: 대기 중</div>
-      <div id="masterNewJobNotice" class="master-new-job-alert hidden">🔔 신규 공고가 등록되었습니다.</div>
-      <button class="full green" onclick="refreshMaster()">즉시 갱신</button>
+      <div class="title">운영 요약</div>
+      <div class="grid">
+        <div class="tile"><b id="jobCount">0</b><span>전체 공고</span></div>
+        <div class="tile"><b id="pendingCount">0</b><span>게시대기</span></div>
+        <div class="tile"><b id="liveCount">0</b><span>게시중</span></div>
+        <div class="tile"><b id="matchCount">0</b><span>누적 매칭</span></div>
+      </div>
+      <div class="sub" id="syncStamp" style="margin-top:10px">자동 갱신 대기</div>
     </div>
-
-    <div class="section">공고 운영 관리</div>
-    <div id="jobFilterBox" class="filter-row"></div>
-    <div id="jobsBox"></div>
+    <div id="jobs"></div>
   </section>
 </main>
 <script>
 const SUPABASE_URL="https://zhbzphvqiiijfjqnktlo.supabase.co";
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InpoYnpwaHZxaWlpamZqcW5rdGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDEwNTcsImV4cCI6MjA5NDYxNzA1N30.ufIPHJh2fzRLm5taos3yTz6pGlEHFKaSoYI2Ref3T5I";
-</script>
-<script>
-// 위 SUPABASE_KEY 오타 방지용: 실제 기존 키로 재선언
-const REAL_SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoYnpwaHZxaWlpamZqcW5rdGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDEwNTcsImV4cCI6MjA5NDYxNzA1N30.ufIPHJh2fzRLm5taos3yTz6pGlEHFKaSoYI2Ref3T5I";
-const db=supabase.createClient(SUPABASE_URL,REAL_SUPABASE_KEY);
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoYnpwaHZxaWlpamZqcW5rdGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDEwNTcsImV4cCI6MjA5NDYxNzA1N30.ufIPHJh2fzRLm5taos3yTz6pGlEHFKaSoYI2Ref3T5I";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const MASTER_PASSWORD="1234";
-const COMPANY_NAMES={demo_company:"FlowIQ Demo",alpha:"Alpha Logistics",beta:"Beta Factory"};
-let jobs=[];let applications=[];let attendance=[];let jobFilter="전체";let masterAutoRefreshTimer=null;let masterSyncing=false;let masterKnownJobIds=[];let masterAlertAudioCtx=null;
-function won(n){return Number(n||0).toLocaleString("ko-KR")+"원"}
-function feeAmount(base){return Math.round(Number(base||0)*0.05)}
-function totalPayment(base){return Number(base||0)+feeAmount(base)}
-function esc(v){return String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]))}
-function getManagerAccounts(){try{return JSON.parse(localStorage.getItem("crew_manager_accounts")||"[]")}catch(e){return []}}
-function getWorkerAccounts(){try{return JSON.parse(localStorage.getItem("crew_worker_accounts")||"[]")}catch(e){return []}}
-function normalizePhone(v){return String(v||"").replace(/[^0-9]/g,"")}
-function rawType(j){return String(j?.type||"공고").trim()}
-function parseType(j){
-  const text=rawType(j);
-  const re=/^\[(입금대기|입금전|입금확인|입금완료|게시중|공고마감)(?::(입금대기|입금전|입금확인|입금완료|게시중))?\]\s*/;
-  const m=text.match(re);
-  let status=m?m[1]:"입금대기";
-  let prev=m&&m[2]?m[2]:"";
-  if(status==="입금전")status="입금대기";
-  if(status==="입금완료")status="입금확인";
-  if(prev==="입금전")prev="입금대기";
-  if(prev==="입금완료")prev="입금확인";
-  return {status,prev,type:text.replace(re,"").trim()||"공고"};
-}
-function jobStatus(j){return parseType(j).status}
-function previousStatus(j){return parseType(j).prev||"입금대기"}
-function jobType(j){return parseType(j).type}
-function statusClass(st){return st==="공고마감"?"closed":(st==="게시중"?"live":(st==="입금확인"?"paid":"wait"))}
-function statusText(st){return st==="입금대기"?"입금전":(st==="입금확인"?"입금완료":st)}
-function statusLabel(j){const st=jobStatus(j);return `<span class="status ${statusClass(st)}">${statusText(st)}</span>`}
-function cleanType(type){return String(type||"공고").replace(/^\[(입금대기|입금전|입금확인|입금완료|게시중|공고마감)(?::(입금대기|입금전|입금확인|입금완료|게시중))?\]\s*/,"").trim()||"공고"}
-function makeType(status,type){return `[${status}] `+cleanType(type)}
-function makeClosedType(prev,type){return `[공고마감:${prev||"입금대기"}] `+cleanType(type)}
-function isApprovedSlotStatus(status){return ['승인','출근완료','근무완료','입금대기','지급확인중','수령확인완료','입금완료','정산완료'].includes(String(status||'').trim())}
-function getApplicationsForJob(jobId){return (applications||[]).filter(a=>Number(a.job_id)===Number(jobId))}
-function getApprovedSlotCount(jobId){return getApplicationsForJob(jobId).filter(a=>isApprovedSlotStatus(a.status)).length}
-function isJobFull(j){const needed=Number(j&&j.needed||0);return needed>0&&getApprovedSlotCount(j.id)>=needed}
-function visibleStatus(j){return isJobFull(j)?'공고마감':jobStatus(j)}
-function getMasterJobKeys(){return (jobs||[]).map(j=>String(j.id)).filter(Boolean)}
-function updateMasterJobBaseline(){masterKnownJobIds=getMasterJobKeys()}
-async function unlockMasterAlertAudio(){
-  try{
-    const AudioContext=window.AudioContext||window.webkitAudioContext;
-    if(!AudioContext)return false;
-    if(!masterAlertAudioCtx)masterAlertAudioCtx=new AudioContext();
-    if(masterAlertAudioCtx.state==='suspended')await masterAlertAudioCtx.resume();
-    return masterAlertAudioCtx.state==='running';
-  }catch(e){console.warn('master audio unlock failed',e);return false}
-}
-function masterTone(ctx,freq,start,duration,volume){
-  const osc=ctx.createOscillator();
-  const gain=ctx.createGain();
-  osc.type='sine';
-  osc.frequency.setValueAtTime(freq,start);
-  gain.gain.setValueAtTime(0.0001,start);
-  gain.gain.exponentialRampToValueAtTime(volume,start+0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001,start+duration);
-  osc.connect(gain); gain.connect(ctx.destination); osc.start(start); osc.stop(start+duration+0.04);
-}
-async function playMasterNewJobSound(){
-  try{
-    await unlockMasterAlertAudio();
-    const ctx=masterAlertAudioCtx;
-    if(ctx && ctx.state==='running'){
-      const now=ctx.currentTime;
-      masterTone(ctx,880,now,0.18,0.42);
-      masterTone(ctx,1180,now+0.23,0.22,0.45);
-    }
-    if(navigator.vibrate)navigator.vibrate([180,80,180]);
-  }catch(e){console.warn('master alert sound blocked',e)}
-}
-function showMasterNewJobNotice(count){
-  const el=document.getElementById('masterNewJobNotice');
-  if(!el)return;
-  el.textContent=`🔔 신규 공고 ${count||1}건이 등록되었습니다. 입금확인을 진행해주세요.`;
-  el.classList.remove('hidden');
-  setTimeout(()=>el.classList.add('hidden'),6000);
-}
-async function loginMaster(){const pw=document.getElementById('masterPassword').value;if(pw!==MASTER_PASSWORD){alert('비밀번호가 틀렸습니다.');return}document.getElementById('loginBox').classList.add('hidden');document.getElementById('masterApp').classList.remove('hidden');await unlockMasterAlertAudio();await loadMasterData(false);updateMasterJobBaseline();startMasterAutoRefresh()}
-function getOpenMasterWorkerPanels(){return Array.from(document.querySelectorAll('[id^="workerInfo_"]:not(.hidden)')).map(el=>String(el.id).replace('workerInfo_',''))}
-function restoreOpenMasterWorkerPanels(openIds){(openIds||[]).forEach(id=>{const el=document.getElementById('workerInfo_'+id);if(el)el.classList.remove('hidden')})}
-async function fetchMasterData(silent=false){const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});const tr=await db.from('attendance').select('*').order('created_at',{ascending:false});if(jr.error&&!silent)alert('jobs 오류: '+jr.error.message);if(ar.error&&!silent)alert('applications 오류: '+ar.error.message);if(tr.error&&!silent)alert('attendance 오류: '+tr.error.message);jobs=jr.data||[];applications=ar.data||[];attendance=tr.data||[];updateMasterLiveStamp()}
-async function loadMasterData(silent=false){const openIds=getOpenMasterWorkerPanels();await fetchMasterData(silent);renderAll(openIds)}
-function renderAll(openIds=[]){renderJobFilters();renderJobs(openIds)}
-function updateMasterLiveStamp(){const el=document.getElementById('masterLiveStamp');if(el)el.innerText='자동 갱신 ON · 최근 반영: '+new Date().toLocaleTimeString('ko-KR')}
-async function masterAutoRefreshTick(force=false){if(masterSyncing || document.getElementById('masterApp')?.classList.contains('hidden'))return;masterSyncing=true;try{const before=new Set(masterKnownJobIds);const openIds=getOpenMasterWorkerPanels();await fetchMasterData(true);renderAll(openIds);const after=getMasterJobKeys();const newKeys=after.filter(k=>!before.has(k));if(newKeys.length>0 && before.size>0){await playMasterNewJobSound();showMasterNewJobNotice(newKeys.length)}masterKnownJobIds=after}catch(e){console.warn('master live sync failed',e);if(force)alert('MASTER 자동 갱신 오류: '+(e.message||e))}finally{masterSyncing=false}}
-function startMasterAutoRefresh(){if(masterAutoRefreshTimer)return;masterAutoRefreshTimer=setInterval(()=>masterAutoRefreshTick(false),2500);setTimeout(()=>masterAutoRefreshTick(true),500)}
-window.addEventListener('focus',()=>masterAutoRefreshTick(false));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)masterAutoRefreshTick(false)});
-async function refreshMaster(){
-  const box=document.getElementById('jobsBox');
-  if(box)box.innerHTML='<div class="card"><div class="sub">새로고침 중...</div></div>';
-  await loadMasterData(false);
-}
-async function reopenJob(id){
-  const job=jobs.find(j=>Number(j.id)===Number(id));
-  if(!job)return alert('공고를 찾을 수 없습니다.');
-  if(jobStatus(job)!=='공고마감')return alert('마감 상태가 아닙니다.');
-  if(isJobFull(job))return alert('필요 인원이 꽉 차서 마감해제할 수 없습니다.');
-  const restore='입금대기';
-  if(!confirm('공고마감을 해제하고 입금전 상태로 되돌릴까요?'))return;
-  const {error}=await db.from('jobs').update({type:makeType(restore,jobType(job))}).eq('id',id);
-  if(error){alert('마감해제 오류: '+error.message);return}
-  await loadMasterData();
-  alert('마감해제 완료: 입금전');
-}
-
-function filterKey(j){return statusText(visibleStatus(j))}
-function filterLabel(key){return key==='입금확인'?'입금완료':key}
-function renderJobFilters(){
-  const box=document.getElementById('jobFilterBox');
-  if(!box)return;
-  const keys=['전체','입금전','입금완료','게시중','공고마감'];
-  const counts={전체:jobs.length,입금전:0,입금완료:0,게시중:0,공고마감:0};
-  jobs.forEach(j=>{const k=filterKey(j);if(counts[k]!==undefined)counts[k]++;});
-  box.innerHTML=keys.map(k=>`<button class="${jobFilter===k?'active':''}" onclick="setJobFilter('${k}')">${k}(${counts[k]||0})</button>`).join('');
-}
-function setJobFilter(key){jobFilter=key;renderJobFilters();renderJobs()}
-function renderJobs(openIds=[]){
-  const box=document.getElementById('jobsBox');
-  const filteredJobs=jobFilter==='전체'?jobs:jobs.filter(j=>filterKey(j)===jobFilter);
-  box.innerHTML=filteredJobs.length?filteredJobs.map(j=>{
-    const current=jobStatus(j);
-    const st=visibleStatus(j);
-    const full=isJobFull(j);
-    const closed=current==='공고마감'||full;
-    const canDeposit=current==='입금대기'&&!full;
-    const canPost=current==='입금확인'&&!full;
-    const jobApps=applications.filter(a=>Number(a.job_id)===Number(j.id));
-    const approvedApps=jobApps.filter(a=>isApprovedSlotStatus(a.status));
-    const approved=approvedApps.length;
-    const checked=approvedApps.filter(a=>attendance.some(t=>String(t.phone||'')===String(a.phone||'')&&String(t.job_id||'')===String(j.id))).length;
-    const workerRows=approvedApps.length
-      ? approvedApps.map(a=>renderWorkerInfoRow(a,j)).join('')
-      : `<div class="danger">승인 완료된 근로자가 없습니다.<br><span class="mini">미선정 · 거절 · 지원취소 · 승인 전 지원자는 표시하지 않습니다.</span></div>`;
-    const depositBtn=canDeposit
-      ? `<button class="yellow" onclick="setJobStatus(${j.id},'입금확인')">입금완료</button>`
-      : `<button class="yellow" disabled>${current==='입금확인'||current==='게시중'?'입금완료':'입금완료'}</button>`;
-    const postBtn=canPost
-      ? `<button class="green" onclick="setJobStatus(${j.id},'게시중')">게시승인</button>`
-      : `<button class="green" onclick="guardPost('${statusText(current)}')">게시승인</button>`;
-    return `<div class="card">
-      <div class="row">
-        <div>
-          <div class="title">${esc(j.title)}</div>
-          <div class="badge">${esc(COMPANY_NAMES[j.company_id]||j.company_id||'업체없음')}</div><br>
-          <span class="status ${statusClass(st)}">${statusText(st)}</span>
-        </div>
-        <button class="red" onclick="deleteJob(${j.id})">삭제</button>
-      </div>
-      <div class="meta">📍 ${esc(j.location)}<br>🕒 ${esc(j.work_time)}<br>💰 업체 일당: ${won(j.salary)}<br>💸 Crew 수수료(5%): ${won(feeAmount(j.salary))}<br>🧾 총 결제금액: ${won(totalPayment(j.salary))}<br>👥 승인 ${approved}/${j.needed||0}${full?' · 공고마감':''}<br>작업: ${esc(jobType(j))} · 언어: ${esc(j.language)}<br>지원 ${jobApps.length}명 · 승인 ${approved}명 · 출근 ${checked}명</div>
-      <div class="grid2" style="margin-top:12px">
-        ${depositBtn}
-        ${postBtn}
-      </div>
-      ${current==='공고마감'
-        ? `<button class="full green" onclick="reopenJob(${j.id})">마감해제</button>`
-        : `<button class="full gray" onclick="setJobStatus(${j.id},'공고마감')">공고마감</button>`}
-      <button class="full blue" onclick="toggleWorkerInfo(${j.id})">정보 보기</button>
-      <div id="workerInfo_${j.id}" class="hidden" style="margin-top:12px">${workerRows}</div>
-    </div>`
-  }).join(''):`<div class="card"><div class="sub">${jobFilter} 공고가 없습니다.</div></div>`;
-  restoreOpenMasterWorkerPanels(openIds);
-}
-function guardPost(currentText){
-  if(currentText==='공고마감')return alert('공고마감 상태입니다. 먼저 마감해제를 눌러주세요.');
-  if(currentText==='입금전')return alert('입금완료 후 게시승인할 수 있습니다.');
-  return alert('현재 상태에서는 게시승인을 할 수 없습니다.');
-}
-
-function toggleWorkerInfo(jobId){
-  const el=document.getElementById('workerInfo_'+jobId);
-  if(el)el.classList.toggle('hidden');
-}
-function hasAccountData(a){
-  const saved=getWorkerAccounts().find(w=>normalizePhone(w.phone)===normalizePhone(a&&a.phone));
-  const bank=a.bank_name||a.bank||a.account_bank||(saved&&saved.bank)||'';
-  const number=a.account_number||a.account||a.bank_account||(saved&&saved.account)||'';
-  return !!(String(bank).trim()&&String(number).trim());
-}
-function settlementBadge(status){
-  const s=String(status||'').trim();
-  if(s==='입금완료')return '<span class="settle-state settle-done">🟢 정산완료</span>';
-  if(s==='지급확인중')return '<span class="settle-state settle-checking">🟠 근로자 수령확인 대기</span>';
-  if(s==='수령확인완료')return '<span class="settle-state settle-checking">🟠 MASTER 정산대기</span>';
-  if(s==='근무완료'||s==='입금대기')return '<span class="settle-state settle-wait">🟡 관리자 지급확인 대기</span>';
-  return '';
-}
-function renderWorkerInfoRow(a,job){
-  const status=String(a.status||'지원').trim();
-  const paid=status==='입금완료';
-  const cashChecking=status==='지급확인중';
-  const workerConfirmed=status==='수령확인완료';
-  const accountReady=hasAccountData(a);
-  const workReady=status==='근무완료'||status==='입금대기'||paid||cashChecking||workerConfirmed;
-  const paymentText=paid?'정산완료':(workerConfirmed?'MASTER 정산대기':(cashChecking?'근로자 수령확인 대기':(workReady?'관리자 지급확인 대기':'근무완료 전')));
-  const paymentClass=paid?'paydone':(workReady?'paywait':'wait');
-  let payButton='';
-  if(paid){
-    payButton=`<button class="full green" disabled>정산 완료</button>`;
-  }else if(workerConfirmed){
-    payButton=`<button class="full green" onclick="markWorkerPaid(${a.id})">정산 완료</button>`;
-  }else if(cashChecking){
-    payButton=`<div class="settle-note">현장관리자 지급 확인 완료.<br>근로자 수령 확인 후 MASTER 정산완료가 가능합니다.</div>`;
-  }else if(status==='근무완료'||status==='입금대기'){
-    payButton=`<div class="settle-note">현장관리자 지급 확인 → 근로자 수령 확인 후 정산완료 처리할 수 있습니다.</div>`;
-  }else{
-    payButton=`<div class="mini">현장관리자 근무완료 체크 후 정산 절차가 시작됩니다.</div>`;
-  }
-
-  return `<div class="card" style="margin:10px 0;background:rgba(15,23,42,.72)">
-    <span class="status ${paymentClass}">${paymentText}</span>
-    ${settlementBadge(status)}
-    <div class="worker-card-title" style="margin-top:10px">${esc(a.worker_name||'이름없음')}</div>
-    <div class="meta">연락처: ${esc(a.phone||'번호없음')}<br>근무상태: ${esc(status)}<br><br><b>현장 정보</b><br>업체명: ${esc(job?job.title:'삭제된 공고')} · 관리자 연락처: ${esc(getManagerContact(job))}<br>현장 위치: ${esc(job?job.location:'-')}<br>근무시간: ${esc(job?job.work_time:'-')}<br>업체 일당: ${job?won(job.salary):'-'}<br>Crew 수수료(5%): ${job?won(feeAmount(job.salary)):'-'}<br>총 결제금액: ${job?won(totalPayment(job.salary)):'-'}<br>작업: ${esc(job?jobType(job):'-')}<br>출근: ${getAttendanceStatus(a)}<br><br><b>계좌 정보</b><br>${getBankInfo(a)}</div>
-    ${payButton}
-  </div>`
-}
-function getBankInfo(a){
-  const saved=getWorkerAccounts().find(w=>normalizePhone(w.phone)===normalizePhone(a.phone));
-  const bank=a.bank_name||a.bank||a.account_bank||(saved&&saved.bank)||'';
-  const number=a.account_number||a.account||a.bank_account||(saved&&saved.account)||'';
-  const holder=a.account_holder||a.holder||(saved&&saved.holder)||a.worker_name||'';
-  if(!bank&&!number)return '계좌 없음 · 현장 지급/수령 확인 필요';
-  return `${bank?esc(bank)+' ':''}${number?esc(number)+' ':''}${holder?'/ '+esc(holder):''}`
-}
-function getManagerContact(job){
-  if(!job)return '미등록';
-  const account=getManagerAccounts().find(a=>String(a.company_id||'')===String(job.company_id||''));
-  const contacts={demo_company:'미등록',alpha:'미등록',beta:'미등록'};
-  return job.manager_phone||job.manager_contact||job.contact_phone||job.phone||(account&&account.phone)||contacts[job.company_id]||'미등록'
-}
-function getAttendanceStatus(a){const found=attendance.find(t=>String(t.phone||'')===String(a.phone||'')&&String(t.job_id||'')===String(a.job_id||''));return found?'출근기록 있음':'출근기록 없음'}
-async function setJobStatus(id,status){
-  const job=jobs.find(j=>Number(j.id)===Number(id));
-  if(!job)return alert('공고를 찾을 수 없습니다.');
-  const current=jobStatus(job);
-  if(current==='공고마감')return alert('공고마감 상태입니다. 먼저 마감해제를 눌러주세요.');
-  if(isJobFull(job))return alert('필요 인원이 꽉 차서 상태를 변경할 수 없습니다.');
-
-  if(status==='입금확인'){
-    if(current!=='입금대기')return alert('입금전 상태에서만 입금완료 처리할 수 있습니다.');
-  }
-  if(status==='게시중'){
-    if(current!=='입금확인')return alert('입금완료 후 게시승인할 수 있습니다.');
-  }
-  if(status==='공고마감'){
-    if(!confirm('이 공고를 마감할까요?'))return;
-  }
-
-  const nextType=status==='공고마감'?makeClosedType(current,jobType(job)):makeType(status,jobType(job));
-  const {error}=await db.from('jobs').update({type:nextType}).eq('id',id);
-  if(error){alert('공고 상태 변경 오류: '+error.message);return}
-  await loadMasterData();
-  alert(statusText(status)+' 처리 완료');
-}
-
-async function markWorkerPaid(id){
-  const app=applications.find(a=>Number(a.id)===Number(id));
-  if(!app)return alert('근로자 정보를 찾을 수 없습니다.');
-  const status=String(app.status||'지원').trim();
-  if(status!=='수령확인완료'){
-    return alert('관리자 지급 확인과 근로자 수령 확인이 모두 완료되어야 정산완료 처리할 수 있습니다.');
-  }
-  if(!confirm('이 근로자를 정산 완료 처리할까요?'))return;
-  const {error}=await db.from('applications').update({status:'입금완료'}).eq('id',id);
-  if(error){alert('입금 완료 처리 오류: '+error.message);return}
-  await loadMasterData();
-  alert('정산 완료 처리됨');
-}
-async function deleteJob(id){if(!confirm('이 공고를 삭제할까요?'))return;const {error}=await db.from('jobs').delete().eq('id',id);if(error){alert('삭제 오류: '+error.message);return}await loadMasterData()}
+let jobs=[], apps=[], timer=null, authed=false, knownJobs=new Set();
+function won(v){return (Number(v)||0).toLocaleString('ko-KR')+'원'}
+function esc(v){return String(v??'').replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[m]))}
+function status(job){const raw=String(job?.type||'');const m=raw.match(/^\[(입금대기|입금확인|게시중|공고마감)\]\s*/);return m?m[1]:'입금대기'}
+function jobType(job){return String(job?.type||'공고').replace(/^\[(입금대기|입금확인|게시중|공고마감)\]\s*/,'').trim()||'공고'}
+function typeWithStatus(job,next){return `[${next}] ${jobType(job)}`}
+function fee(job){return Math.round((Number(job.salary)||0)*(Number(job.needed)||0)*0.05)}
+function matchApps(jobId){return apps.filter(a=>Number(a.job_id)===Number(jobId) && String(a.status||'').trim()==='승인')}
+function rejectAppsByPhone(phone){const p=String(phone||'').replace(/[^0-9]/g,'');return apps.filter(a=>String(a.phone||'').replace(/[^0-9]/g,'')===p && ['거절','매칭취소'].includes(String(a.status||'').trim())).length}
+function matchAppsByPhone(phone){const p=String(phone||'').replace(/[^0-9]/g,'');return apps.filter(a=>String(a.phone||'').replace(/[^0-9]/g,'')===p && String(a.status||'').trim()==='승인').length}
+function loginMaster(){if(masterPw.value!==MASTER_PASSWORD)return alert('비밀번호가 다릅니다.');authed=true;login.classList.add('hidden');dash.classList.remove('hidden');loadAll(true);if(timer)clearInterval(timer);timer=setInterval(()=>loadAll(false),3000)}
+async function loadAll(force=false){if(!authed && !force)return;const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});if(jr.error)return alert('공고 조회 오류: '+jr.error.message);if(ar.error)return alert('지원자 조회 오류: '+ar.error.message);const prev=knownJobs;jobs=jr.data||[];apps=ar.data||[];knownJobs=new Set(jobs.map(j=>String(j.id)));const newPending=jobs.filter(j=>!prev.has(String(j.id)) && status(j)==='입금대기');if(prev.size && newPending.length)beep();render();}
+function beep(){try{const C=window.AudioContext||window.webkitAudioContext;const ctx=new C();const o=ctx.createOscillator();const g=ctx.createGain();o.frequency.value=880;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.25,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.35);o.start();o.stop(ctx.currentTime+.38);if(navigator.vibrate)navigator.vibrate([160,70,160])}catch(e){}}
+function render(){jobCount.innerText=jobs.length;pendingCount.innerText=jobs.filter(j=>status(j)==='입금대기').length;liveCount.innerText=jobs.filter(j=>status(j)==='게시중').length;matchCount.innerText=apps.filter(a=>String(a.status||'').trim()==='승인').length;syncStamp.innerText='최근 자동 갱신: '+new Date().toLocaleTimeString('ko-KR');jobsEl=document.getElementById('jobs');jobsEl.innerHTML=jobs.map(j=>{const st=status(j);const matched=matchApps(j.id);const remain=Math.max(0,(Number(j.needed)||0)-matched.length);const workers=matched.length?matched.map(a=>`<div class="worker"><div class="worker-name">${esc(a.worker_name||a.name||'이름없음')} · 매칭 ${matchAppsByPhone(a.phone)}회 · 거절 ${rejectAppsByPhone(a.phone)}회</div><div class="worker-meta">${esc(a.phone||'번호없음')}</div></div>`).join(''):`<div class="worker"><div class="worker-meta">아직 승인된 근로자가 없습니다.</div></div>`;return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div><div class="info">📍 ${esc(j.location||'-')}</div><div class="info">🕒 ${esc(j.work_time||'-')}</div><div class="info">💰 일당 ${won(j.salary)} · 모집 ${Number(j.needed)||0}명 · 플랫폼 수수료 ${won(fee(j))}</div><div class="info">남은 자리 ${remain}명</div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`}).join('')||'<div class="card"><div class="sub">공고가 없습니다.</div></div>'}
+async function publishJob(id){const job=jobs.find(j=>Number(j.id)===Number(id));if(!job)return;const r=await db.from('jobs').update({type:typeWithStatus(job,'게시중')}).eq('id',id);if(r.error)return alert('게시승인 오류: '+r.error.message);await loadAll(true);alert('게시승인 완료')}
+async function closeJob(id){const job=jobs.find(j=>Number(j.id)===Number(id));if(!job)return;const r=await db.from('jobs').update({type:typeWithStatus(job,'공고마감')}).eq('id',id);if(r.error)return alert('마감 오류: '+r.error.message);await loadAll(true)}
+async function deleteJob(id){if(!confirm('삭제할까요?'))return;const r=await db.from('jobs').delete().eq('id',id);if(r.error)return alert('삭제 오류: '+r.error.message);await loadAll(true)}
 </script>
 </body>
 </html>
