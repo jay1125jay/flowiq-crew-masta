@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlowIQ Crew MASTER v4.0.5 DATE PAY NOTICE</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+/* ===== FlowIQ MASTER v4.0.5 Date + Pay Notice Patch ===== */
+function parseWorkScheduleMaster(job){
+  const raw=String(job?.work_time||'').trim();
+  const re=/^\[\[FIQ_DATE:([^|\]]*)\|([^\]]*)\]\]\s*/;
+  const m=raw.match(re);
+  const start=m?m[1]:'';
+  const end=m?(m[2]||m[1]):start;
+  const time=m?raw.replace(re,'').trim():raw;
+  const fmt=(d)=>{const mm=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return mm?`${mm[1]}.${mm[2]}.${mm[3]}`:String(d||'날짜 미정')};
+  return {dateText:start?(end&&end!==start?`${fmt(start)} ~ ${fmt(end)}`:fmt(start)):'날짜 미정', timeText:time||'-'};
+}
+function render(){
+  jobCount.innerText=jobs.length;
+  pendingCount.innerText=jobs.filter(j=>status(j)==='입금대기').length;
+  liveCount.innerText=jobs.filter(j=>status(j)==='게시중').length;
+  matchCount.innerText=apps.filter(a=>String(a.status||'').trim()==='승인').length;
+  syncStamp.innerText='최근 자동 갱신: '+new Date().toLocaleTimeString('ko-KR')+' · FlowIQ Crew는 플랫폼 수수료만 확인합니다.';
+  jobsEl=document.getElementById('jobs');
+  jobsEl.innerHTML=jobs.map(j=>{
+    const st=status(j);
+    const schedule=parseWorkScheduleMaster(j);
+    const matched=matchApps(j.id);
+    const remain=Math.max(0,(Number(j.needed)||0)-matched.length);
+    const workers=matched.length?matched.map(a=>`<div class="worker"><div class="worker-name">${esc(a.worker_name||a.name||'이름없음')} · 매칭 ${matchAppsByPhone(a.phone)}회 · 거절 ${rejectAppsByPhone(a.phone)}회</div><div class="worker-meta">${esc(a.phone||'번호없음')}</div></div>`).join(''):`<div class="worker"><div class="worker-meta">아직 승인된 근로자가 없습니다.</div></div>`;
+    return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div><div class="info">📅 ${esc(schedule.dateText)}</div><div class="info">⏰ ${esc(schedule.timeText)}</div><div class="info">📍 ${esc(j.location||'-')}</div><div class="info">💰 일당 ${won(j.salary)} · 모집 ${Number(j.needed)||0}명 · 플랫폼 수수료 ${won(fee(j))}</div><div class="info" style="background:rgba(37,99,235,.10);border:1px solid rgba(96,165,250,.18);border-radius:14px;padding:10px">※ FlowIQ Crew는 플랫폼 수수료만 확인합니다. 근로자 임금은 업체가 직접 지급합니다.</div><div class="info">남은 자리 ${remain}명</div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`;
+  }).join('')||'<div class="card"><div class="sub">공고가 없습니다.</div></div>';
+}
+
+</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;padding:0;min-height:100%;background:radial-gradient(circle at top left,rgba(59,130,246,.18),transparent 32%),#020617;color:white;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}body{display:flex;justify-content:center}.app{width:100%;max-width:760px;min-height:100vh;padding:26px 16px 80px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.brand{font-size:28px;font-weight:950;background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sub{color:#94a3b8;font-size:14px;line-height:1.45}.card{background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(17,24,39,.96));border:1px solid rgba(148,163,184,.14);border-radius:26px;padding:18px;margin-bottom:14px;box-shadow:0 12px 34px rgba(0,0,0,.28)}.title{font-size:20px;font-weight:900;margin-bottom:6px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.tile{background:rgba(2,6,23,.65);border:1px solid rgba(148,163,184,.12);border-radius:18px;padding:13px;text-align:center}.tile b{display:block;font-size:22px}.tile span{font-size:12px;color:#94a3b8}input{width:100%;min-height:54px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:#0f172a;color:white;padding:0 15px;font-size:15px;margin:8px 0 12px}button{border:0;color:white;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:18px;min-height:48px;font-size:14px;font-weight:900;cursor:pointer;padding:0 14px}.green{background:linear-gradient(135deg,#059669,#10b981)}.gray{background:linear-gradient(135deg,#475569,#1e293b)}.red{background:linear-gradient(135deg,#b91c1c,#ef4444)}.full{width:100%}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;background:rgba(59,130,246,.18);color:#bfdbfe;font-weight:900;font-size:12px}.info{color:#cbd5e1;font-size:14px;margin:8px 0;line-height:1.45}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.worker{background:rgba(2,6,23,.55);border:1px solid rgba(148,163,184,.10);border-radius:18px;padding:13px;margin-top:10px}.worker-name{font-weight:900}.worker-meta{color:#94a3b8;font-size:13px;margin-top:4px}.hidden{display:none}.notice{background:rgba(37,99,235,.12);border-color:rgba(96,165,250,.22)}@media(max-width:560px){.grid{grid-template-columns:1fr 1fr}.actions{grid-template-columns:1fr}.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div><div class="brand">FlowIQ MASTER</div><div class="sub">v4.0.5 단순 매칭 · 수수료 5% 확인</div></div>
+    <button class="gray" onclick="loadAll(true)">새로고침</button>
+  </header>
+
+  <section id="login" class="card">
+    <div class="title">MASTER 로그인</div>
+    <div class="sub">플랫폼 수수료만 확인합니다. 근로자 임금은 업체가 직접 지급합니다.</div>
+    <input id="masterPw" type="password" placeholder="MASTER 비밀번호">
+    <button class="full" onclick="loginMaster()">접속</button>
+  </section>
+
+  <section id="dash" class="hidden">
+    <div class="card notice">
+      <div class="title">운영 요약</div>
+      <div class="grid">
+        <div class="tile"><b id="jobCount">0</b><span>전체 공고</span></div>
+        <div class="tile"><b id="pendingCount">0</b><span>게시대기</span></div>
+        <div class="tile"><b id="liveCount">0</b><span>게시중</span></div>
+        <div class="tile"><b id="matchCount">0</b><span>누적 매칭</span></div>
+      </div>
+      <div class="sub" id="syncStamp" style="margin-top:10px">자동 갱신 대기</div>
+    </div>
+    <div id="jobs"></div>
+  </section>
+</main>
+<script>
+const SUPABASE_URL="https://zhbzphvqiiijfjqnktlo.supabase.co";
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpoYnpwaHZxaWlpamZqcW5rdGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDEwNTcsImV4cCI6MjA5NDYxNzA1N30.ufIPHJh2fzRLm5taos3yTz6pGlEHFKaSoYI2Ref3T5I";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const MASTER_PASSWORD="1234";
+let jobs=[], apps=[], timer=null, authed=false, knownJobs=new Set();
+function won(v){return (Number(v)||0).toLocaleString('ko-KR')+'원'}
+function esc(v){return String(v??'').replace(/[&<>'"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[m]))}
+function status(job){const raw=String(job?.type||'');const m=raw.match(/^\[(입금대기|입금확인|게시중|공고마감)\]\s*/);return m?m[1]:'입금대기'}
+function jobType(job){return String(job?.type||'공고').replace(/^\[(입금대기|입금확인|게시중|공고마감)\]\s*/,'').trim()||'공고'}
+function typeWithStatus(job,next){return `[${next}] ${jobType(job)}`}
+function fee(job){return Math.round((Number(job.salary)||0)*(Number(job.needed)||0)*0.05)}
+function matchApps(jobId){return apps.filter(a=>Number(a.job_id)===Number(jobId) && String(a.status||'').trim()==='승인')}
+function rejectAppsByPhone(phone){const p=String(phone||'').replace(/[^0-9]/g,'');return apps.filter(a=>String(a.phone||'').replace(/[^0-9]/g,'')===p && ['거절','매칭취소'].includes(String(a.status||'').trim())).length}
+function matchAppsByPhone(phone){const p=String(phone||'').replace(/[^0-9]/g,'');return apps.filter(a=>String(a.phone||'').replace(/[^0-9]/g,'')===p && String(a.status||'').trim()==='승인').length}
+function loginMaster(){if(masterPw.value!==MASTER_PASSWORD)return alert('비밀번호가 다릅니다.');authed=true;login.classList.add('hidden');dash.classList.remove('hidden');loadAll(true);if(timer)clearInterval(timer);timer=setInterval(()=>loadAll(false),3000)}
+async function loadAll(force=false){if(!authed && !force)return;const jr=await db.from('jobs').select('*').order('created_at',{ascending:false});const ar=await db.from('applications').select('*').order('created_at',{ascending:false});if(jr.error)return alert('공고 조회 오류: '+jr.error.message);if(ar.error)return alert('지원자 조회 오류: '+ar.error.message);const prev=knownJobs;jobs=jr.data||[];apps=ar.data||[];knownJobs=new Set(jobs.map(j=>String(j.id)));const newPending=jobs.filter(j=>!prev.has(String(j.id)) && status(j)==='입금대기');if(prev.size && newPending.length)beep();render();}
+function beep(){try{const C=window.AudioContext||window.webkitAudioContext;const ctx=new C();const o=ctx.createOscillator();const g=ctx.createGain();o.frequency.value=880;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.25,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.35);o.start();o.stop(ctx.currentTime+.38);if(navigator.vibrate)navigator.vibrate([160,70,160])}catch(e){}}
+function render(){jobCount.innerText=jobs.length;pendingCount.innerText=jobs.filter(j=>status(j)==='입금대기').length;liveCount.innerText=jobs.filter(j=>status(j)==='게시중').length;matchCount.innerText=apps.filter(a=>String(a.status||'').trim()==='승인').length;syncStamp.innerText='최근 자동 갱신: '+new Date().toLocaleTimeString('ko-KR');jobsEl=document.getElementById('jobs');jobsEl.innerHTML=jobs.map(j=>{const st=status(j);const matched=matchApps(j.id);const remain=Math.max(0,(Number(j.needed)||0)-matched.length);const workers=matched.length?matched.map(a=>`<div class="worker"><div class="worker-name">${esc(a.worker_name||a.name||'이름없음')} · 매칭 ${matchAppsByPhone(a.phone)}회 · 거절 ${rejectAppsByPhone(a.phone)}회</div><div class="worker-meta">${esc(a.phone||'번호없음')}</div></div>`).join(''):`<div class="worker"><div class="worker-meta">아직 승인된 근로자가 없습니다.</div></div>`;return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div><div class="info">📍 ${esc(j.location||'-')}</div><div class="info">🕒 ${esc(j.work_time||'-')}</div><div class="info">💰 일당 ${won(j.salary)} · 모집 ${Number(j.needed)||0}명 · 플랫폼 수수료 ${won(fee(j))}</div><div class="info">남은 자리 ${remain}명</div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`}).join('')||'<div class="card"><div class="sub">공고가 없습니다.</div></div>'}
+async function publishJob(id){const job=jobs.find(j=>Number(j.id)===Number(id));if(!job)return;const r=await db.from('jobs').update({type:typeWithStatus(job,'게시중')}).eq('id',id);if(r.error)return alert('게시승인 오류: '+r.error.message);await loadAll(true);alert('게시승인 완료')}
+async function closeJob(id){const job=jobs.find(j=>Number(j.id)===Number(id));if(!job)return;const r=await db.from('jobs').update({type:typeWithStatus(job,'공고마감')}).eq('id',id);if(r.error)return alert('마감 오류: '+r.error.message);await loadAll(true)}
+async function deleteJob(id){if(!confirm('삭제할까요?'))return;const r=await db.from('jobs').delete().eq('id',id);if(r.error)return alert('삭제 오류: '+r.error.message);await loadAll(true)}
+
+
+/* ===== FlowIQ MASTER v4.0.5 Date + Pay Notice Patch ===== */
+function parseWorkScheduleMaster(job){
+  const raw=String(job?.work_time||'').trim();
+  const re=/^\[\[FIQ_DATE:([^|\]]*)\|([^\]]*)\]\]\s*/;
+  const m=raw.match(re);
+  const start=m?m[1]:'';
+  const end=m?(m[2]||m[1]):start;
+  const time=m?raw.replace(re,'').trim():raw;
+  const fmt=(d)=>{const mm=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return mm?`${mm[1]}.${mm[2]}.${mm[3]}`:String(d||'날짜 미정')};
+  return {dateText:start?(end&&end!==start?`${fmt(start)} ~ ${fmt(end)}`:fmt(start)):'날짜 미정', timeText:time||'-'};
+}
+function render(){
+  jobCount.innerText=jobs.length;
+  pendingCount.innerText=jobs.filter(j=>status(j)==='입금대기').length;
+  liveCount.innerText=jobs.filter(j=>status(j)==='게시중').length;
+  matchCount.innerText=apps.filter(a=>String(a.status||'').trim()==='승인').length;
+  syncStamp.innerText='최근 자동 갱신: '+new Date().toLocaleTimeString('ko-KR')+' · FlowIQ Crew는 플랫폼 수수료만 확인합니다.';
+  jobsEl=document.getElementById('jobs');
+  jobsEl.innerHTML=jobs.map(j=>{
+    const st=status(j);
+    const schedule=parseWorkScheduleMaster(j);
+    const matched=matchApps(j.id);
+    const remain=Math.max(0,(Number(j.needed)||0)-matched.length);
+    const workers=matched.length?matched.map(a=>`<div class="worker"><div class="worker-name">${esc(a.worker_name||a.name||'이름없음')} · 매칭 ${matchAppsByPhone(a.phone)}회 · 거절 ${rejectAppsByPhone(a.phone)}회</div><div class="worker-meta">${esc(a.phone||'번호없음')}</div></div>`).join(''):`<div class="worker"><div class="worker-meta">아직 승인된 근로자가 없습니다.</div></div>`;
+    return `<div class="card"><div class="row"><div><div class="title">${esc(j.title||'공고명 없음')}</div><div class="badge">${esc(st)} · ${esc(jobType(j))}</div></div><div class="badge">매칭 ${matched.length}/${Number(j.needed)||0}</div></div><div class="info">📅 ${esc(schedule.dateText)}</div><div class="info">⏰ ${esc(schedule.timeText)}</div><div class="info">📍 ${esc(j.location||'-')}</div><div class="info">💰 일당 ${won(j.salary)} · 모집 ${Number(j.needed)||0}명 · 플랫폼 수수료 ${won(fee(j))}</div><div class="info" style="background:rgba(37,99,235,.10);border:1px solid rgba(96,165,250,.18);border-radius:14px;padding:10px">※ FlowIQ Crew는 플랫폼 수수료만 확인합니다. 근로자 임금은 업체가 직접 지급합니다.</div><div class="info">남은 자리 ${remain}명</div><div class="actions">${st==='입금대기'||st==='입금확인'?`<button class="green" onclick="publishJob(${Number(j.id)})">수수료 확인 · 게시승인</button>`:''}${st==='게시중'?`<button class="gray" onclick="closeJob(${Number(j.id)})">공고마감</button>`:''}<button class="red" onclick="deleteJob(${Number(j.id)})">삭제</button></div><details style="margin-top:12px"><summary class="badge">승인 근로자 보기</summary>${workers}</details></div>`;
+  }).join('')||'<div class="card"><div class="sub">공고가 없습니다.</div></div>';
+}
+
+</script>
+</body>
+</html>
