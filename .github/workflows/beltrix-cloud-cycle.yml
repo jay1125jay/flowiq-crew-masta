@@ -6,7 +6,7 @@ on:
     paths:
       - ".github/workflows/beltrix-cloud-cycle.yml"
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "2-57/5 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,30 +14,53 @@ permissions:
 
 concurrency:
   group: beltrix-cloud-cycle
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   cycle:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 6
     steps:
-      - name: Run PAPER cycle
+      - name: Run effective 60-second PAPER cycles
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          RESPONSE="$(curl -fsS --retry 2 --retry-delay 2 --max-time 60 \
-            -X POST "https://beltrix-futures.floot.app/_api/cycle" \
-            -H "Content-Type: application/json" \
-            --data '{"json":{}}')"
-          echo "$RESPONSE"
-          echo "$RESPONSE" | grep -q '"ok":true'
 
-      - name: Verify PAPER safety
-        shell: bash
-        run: |
-          set -euo pipefail
-          HEALTH="$(curl -fsS --retry 2 --retry-delay 2 --max-time 30 \
-            "https://beltrix-futures.floot.app/_api/health")"
-          echo "$HEALTH"
-          echo "$HEALTH" | grep -q '"paperOnly":true'
-          echo "$HEALTH" | grep -q '"status":"OK"'
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            LOOPS=5
+          else
+            LOOPS=1
+          fi
+
+          for i in $(seq 1 "$LOOPS"); do
+            START_TS=$(date +%s)
+            echo "BELTRIX_CYCLE=$i/$LOOPS START=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+            RESPONSE="$(curl -fsS --retry 2 --retry-delay 2 --max-time 45 \
+              -X POST "https://beltrix-futures.floot.app/_api/cycle" \
+              -H "Content-Type: application/json" \
+              --data '{"json":{}}')"
+
+            echo "$RESPONSE"
+            echo "$RESPONSE" | grep -q '"ok":true'
+
+            HEALTH="$(curl -fsS --retry 2 --retry-delay 2 --max-time 20 \
+              "https://beltrix-futures.floot.app/_api/health")"
+
+            echo "$HEALTH"
+            echo "$HEALTH" | grep -q '"paperOnly":true'
+            echo "$HEALTH" | grep -q '"status":"OK"'
+
+            END_TS=$(date +%s)
+            ELAPSED=$((END_TS - START_TS))
+            echo "BELTRIX_CYCLE=$i/$LOOPS PASS ELAPSED=$ELAPSED seconds"
+
+            if [ "$i" -lt "$LOOPS" ]; then
+              SLEEP_FOR=$((60 - ELAPSED))
+              if [ "$SLEEP_FOR" -gt 0 ]; then
+                sleep "$SLEEP_FOR"
+              fi
+            fi
+          done
